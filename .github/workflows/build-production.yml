@@ -28,7 +28,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/photoprism/bookworm/Dockerfile
+          file: docker/photoprism/arm64/Dockerfile
           platforms: linux/arm64
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/photoprism:latest
