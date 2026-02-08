@@ -1,27 +1,25 @@
 ##################################################### BUILD STAGE ######################################################
-FROM photoprism/develop:bookworm AS build
+FROM photoprism/develop:questing AS build
 
 # Declare build parameters.
 ARG TARGETARCH
+ARG TARGETPLATFORM
 ARG BUILD_TAG
 
 # Copy source to image.
 WORKDIR "/go/src/github.com/photoprism/photoprism"
 COPY . .
 
-# Fix incomplete TensorFlow headers on ARM64 by reinstalling to /usr.
-RUN rm -rf /usr/include/tensorflow && ./scripts/dist/install-tensorflow.sh /usr
-
 # Build app.
 RUN make all install DESTDIR=/opt/photoprism
 
 ################################################## PRODUCTION STAGE ####################################################
-#### Base Image: Debian 12 (Bookworm)
-FROM photoprism/develop:bookworm-slim
+#### Base Image: Ubuntu 25.10 (Questing Quokka)
+FROM photoprism/develop:questing-slim
 
 # Add Open Container Initiative (OCI) annotations.
-LABEL org.opencontainers.image.title="PhotoPrism® (Debian 12, ARM64)"
-LABEL org.opencontainers.image.description="Debian 12 (Bookworm) ARM64"
+LABEL org.opencontainers.image.title="PhotoPrism® (Ubuntu 25.10, ARM64)"
+LABEL org.opencontainers.image.description="Ubuntu 25.10 (Questing Quokka) ARM64"
 LABEL org.opencontainers.image.url="https://github.com/raphaelmatto/photoprism"
 LABEL org.opencontainers.image.source="https://github.com/raphaelmatto/photoprism"
 
@@ -80,6 +78,7 @@ COPY --chown=root:root --chmod=755 /scripts/dist/ /scripts/
 # Update pre-installed packages.
 RUN apt-get update && \
     apt-get -qq dist-upgrade && \
+    yt-dlp -U && \
     /scripts/cleanup.sh
 
 # Set default working directory.
@@ -88,7 +87,7 @@ WORKDIR /photoprism
 # Expose HTTP(S) ports.
 EXPOSE 2342 2443
 
-# copy dist files
+# Copy app files.
 COPY --from=build --chown=root:root --chmod=755 /opt/photoprism/ /opt/photoprism
 
 # Declare container entrypoint script.
