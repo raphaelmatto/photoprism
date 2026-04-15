@@ -502,7 +502,7 @@ export default {
       debug,
       trace,
       packedGutter: 8,
-      packedTargetRowHeight: this.$isMobile ? 140 : 210,
+      packedTargetRowHeight: this.$isMobile ? 200 : 280,
       packedRows: [],
       resizeObserver: null,
       contexts,
