@@ -16,7 +16,7 @@ All settings take effect immediately without a server restart. They are stored i
 
 ### ARM64 Docker Build
 
-Custom ARM64 Dockerfile (`docker/photoprism/arm64/Dockerfile`) that fixes incomplete TensorFlow C headers in the upstream `photoprism/develop:bookworm` base image. See [upstream issue #5444](https://github.com/photoprism/photoprism/issues/5444).
+Production images now build from the standard `docker/photoprism/questing/Dockerfile` on a native ARM64 GitHub Actions runner. An earlier custom ARM64 Dockerfile existed to work around broken TensorFlow headers in the deprecated `photoprism/develop:bookworm` base image, but that workaround was retired after switching to the supported `questing` base. See [upstream issue #5444](https://github.com/photoprism/photoprism/issues/5444).
 
 ## Branch Structure
 
@@ -40,10 +40,11 @@ A GitHub Actions workflow (`.github/workflows/build-production.yml`) builds and 
 
 - **Runner**: `ubuntu-24.04-arm` (native ARM64, no emulation)
 - **Registry**: `ghcr.io/raphaelmatto/photoprism:latest`
-- **Dockerfile**: `docker/photoprism/arm64/Dockerfile`
+- **Immutable tag**: `ghcr.io/raphaelmatto/photoprism:sha-<git-sha>`
+- **Dockerfile**: `docker/photoprism/questing/Dockerfile`
 - **Build time**: ~5 minutes
 
-The workflow uses `GITHUB_TOKEN` for registry auth — no secrets to configure.
+The workflow uses `GITHUB_TOKEN` for registry auth, publishes both `latest` and commit-specific `sha-...` tags, and can also be triggered manually with `workflow_dispatch`.
 
 ## How to Deploy
 
@@ -79,6 +80,12 @@ git push origin production
 # 3. On the server
 docker compose pull
 docker compose up -d
+```
+
+For rollback or pinned deploys, use an immutable image tag instead of `latest`:
+
+```yaml
+image: ghcr.io/raphaelmatto/photoprism:sha-<git-sha>
 ```
 
 ### Reverting to Official Image

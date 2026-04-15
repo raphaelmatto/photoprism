@@ -1,6 +1,6 @@
 # PhotoPrism® — Repository Guidelines
 
-**Last Updated:** December 8, 2025
+**Last Updated:** April 15, 2026
 
 ## Purpose
 
@@ -18,6 +18,7 @@ This file tells automated coding agents (and humans) where to find the single so
 - Packages: `README.md` files under `internal/`, `pkg/`, and `frontend/src/`, e.g. [`internal/photoprism/README.md`](internal/photoprism/README.md), [`internal/photoprism/batch/README.md`](internal/photoprism/batch/README.md), [`internal/config/README.md`](internal/config/README.md), [`internal/server/README.md`](internal/server/README.md), [`internal/api/README.md`](internal/api/README.md), [`internal/thumb/README.md`](internal/thumb/README.md), [`internal/ffmpeg/README.md`](internal/ffmpeg/README.md), and [`frontend/src/common/README.md`](frontend/src/common/README.md).
 - Face Detection & Embeddings: [`internal/ai/face/README.md`](internal/ai/face/README.md)
 - Vision Config & Engines: [`internal/ai/vision/README.md`](internal/ai/vision/README.md), [`internal/ai/vision/openai/README.md`](internal/ai/vision/openai/README.md), [`internal/ai/vision/ollama/README.md`](internal/ai/vision/ollama/README.md)
+- Fork-Specific Production Deploys: [`README.md`](README.md), [`.github/workflows/build-production.yml`](.github/workflows/build-production.yml), [`docker/photoprism/questing/Dockerfile`](docker/photoprism/questing/Dockerfile)
 
 > Quick Tip: to inspect GitHub issue details without leaving the terminal, run `curl -s https://api.github.com/repos/photoprism/photoprism/issues/<id>`.
 
@@ -115,6 +116,14 @@ console.log(inContainer ? "container" : "host");
 ## Build & Run (local)
 
 - Run `make help` to see common targets (or open the `Makefile`).
+
+### Fork Production Image
+
+- This fork uses a dedicated production branch named `production`.
+- Pushes to `production` trigger [`.github/workflows/build-production.yml`](.github/workflows/build-production.yml), which publishes the ARM64 production image to `ghcr.io/raphaelmatto/photoprism`.
+- The workflow currently builds from the standard [`docker/photoprism/questing/Dockerfile`](docker/photoprism/questing/Dockerfile), not a fork-specific Dockerfile.
+- Published tags include the mutable `latest` tag and immutable `sha-<commit>` tags; prefer the SHA tag when you need exact rollout or rollback tracking.
+- Human-oriented deployment steps live in [`README.md`](README.md); keep `AGENTS.md` concise and operational.
 
 - **Host mode** (agent runs on the host; agent MAY manage Docker lifecycle):
   - Build local dev image (once): `make docker-build`
