@@ -31,6 +31,7 @@
           'sidebar-visible': info,
           'slideshow-active': slideshow.active,
           'is-fullscreen': isFullscreen(),
+          'is-zoomed-in': isZoomedIn,
           'is-zoomable': isZoomable,
           'is-favorite': model.Favorite,
           'is-playable': model.Playable,
@@ -95,6 +96,7 @@ import Lightbox from "photoswipe/lightbox";
 import Captions from "common/captions";
 import $api from "common/api";
 import $fullscreen from "common/fullscreen";
+import { hasMetadataText, metadataLayout, metadataText, MetadataView } from "common/metadata";
 import Thumb from "model/thumb";
 import Collection from "model/collection";
 import { Photo } from "model/photo";
@@ -154,6 +156,8 @@ export default {
       defaultControlHideDelay: 5000, // Automatically hide lightbox controls this time in ms, TODO: add custom settings.
       idleTimer: false,
       controlsShown: -1, // -1 or a positive timestamp indicates that the controls are shown (0 means hidden).
+      isZoomedIn: false,
+      zoomToggleElement: null,
       canEdit: this.$config.allow("photos", "update") && features.edit,
       canLike: this.$config.allow("photos", "manage") && features.favorites,
       canDownload: this.$config.allow("photos", "download") && features.download,
@@ -167,6 +171,7 @@ export default {
       featDevelop: this.$config.featDevelop(), // Enables new features that are still under development.
       selection: this.$clipboard.selection,
       config: this.$config.values,
+      detailRequestUid: "",
       collection: null,
       context: contexts.Default,
       model: new Thumb(), // Current slide.
@@ -569,7 +574,7 @@ export default {
       if (original) {
         // Divide by devicePixelRatio if retina lightbox is enabled, so the browser maps
         // image pixels 1:1 to device pixels on HiDPI displays.
-        const dpr = displaySettings?.retinaLightbox ? (window.devicePixelRatio || 1) : 1;
+        const dpr = displaySettings?.retinaLightbox ? window.devicePixelRatio || 1 : 1;
         const img = {
           src: original.src,
           width: Math.round(original.w / dpr),
@@ -613,7 +618,7 @@ export default {
 
       // Divide by devicePixelRatio if retina lightbox is enabled, so the browser maps
       // image pixels 1:1 to device pixels on HiDPI displays.
-      const dpr = displaySettings?.retinaLightbox ? (window.devicePixelRatio || 1) : 1;
+      const dpr = displaySettings?.retinaLightbox ? window.devicePixelRatio || 1 : 1;
 
       // Set thumbnail image URL, width, and height.
       const img = {
@@ -1123,6 +1128,9 @@ export default {
       // see https://photoswipe.com/adding-ui-elements/.
       this.addLightboxControls();
 
+      // Track zoom state so the custom zoom control can show the correct icon and label.
+      this.lightbox.on("zoomPanUpdate", this.onZoomPanUpdate.bind(this));
+
       // Handle zoom level changes to load higher quality thumbnails
       // when image size changes
       this.lightbox.on("imageSizeChange", ({ slide }) => {
@@ -1333,6 +1341,34 @@ export default {
             onClick: (ev) => this.onControlClick(ev, this.toggleFullscreen),
           });
         }
+
+        // Add zoom toggle control.
+        lightbox.pswp.ui.registerElement({
+          name: "zoom-toggle",
+          className: "pswp__button--zoom-toggle pswp__button--mdi",
+          title: this.$gettext("Zoom in"),
+          ariaLabel: this.$gettext("Zoom in"),
+          order: 10,
+          isButton: true,
+          html: {
+            isCustomSVG: true,
+            inner:
+              `<use class="pswp__icn-shadow pswp__icn-zoom-in" xlink:href="#pswp__icn-zoom-in"></use>` +
+              `<path d="M17.426 19.926a6 6 0 1 1 1.5-1.5L23 22.5 21.5 24l-4.074-4.074z" id="pswp__icn-zoom-in" class="pswp__icn-zoom-in" />` +
+              `<path fill="currentColor" class="pswp__icn-zoom-in pswp__zoom-icn-bar-h" d="M11 16v-2h6v2z"/>` +
+              `<path fill="currentColor" class="pswp__icn-zoom-in pswp__zoom-icn-bar-v" d="M13 12h2v6h-2z"/>` +
+              `<use class="pswp__icn-shadow pswp__icn-zoom-out" xlink:href="#pswp__icn-zoom-out"></use>` +
+              `<path d="M17.426 19.926a6 6 0 1 1 1.5-1.5L23 22.5 21.5 24l-4.074-4.074z" id="pswp__icn-zoom-out" class="pswp__icn-zoom-out" />` +
+              `<path fill="currentColor" class="pswp__icn-zoom-out pswp__zoom-icn-bar-h" d="M11 16v-2h6v2z"/>`,
+            outlineID: "pswp__icn-zoom-in",
+            size: 24,
+          },
+          onInit: (el) => {
+            this.zoomToggleElement = el;
+            this.updateZoomToggleButton();
+          },
+          onClick: (ev) => this.onControlClick(ev, this.toggleZoom),
+        });
 
         // Add favorite toggle control if user has permission to use it.
         if (this.canLike) {
@@ -1545,34 +1581,31 @@ export default {
         return "";
       }
 
-      let caption = "";
-
-      if (model.Title) {
-        caption += `<h4>${this.$util.encodeHTML(model.Title.trim())}</h4>`;
-      }
-
-      /*
-        TODO: Find a good position for the date information that works for all screen sizes and image dimensions.
-              We MAY postpone this and display it along with other metadata in the new sidebar.
-       */
-      /* if (model.TakenAtLocal) {
-         caption += `<div>${this.$util.formatDate(model.TakenAtLocal)}</div>`;
-      } */
-
       if (model.Description && !model.Caption) {
         model.Caption = model.Description;
       }
 
-      let text = typeof model.Caption === "string" ? model.Caption.trim() : "";
+      const layout = metadataLayout(this.$config.getSettings(), MetadataView.Cards);
+      const fields = layout
+        .map((fieldId, index) => {
+          if (fieldId === "location" && (!model?.Lat || !model?.Lng)) {
+            return null;
+          } else if (!hasMetadataText(model, fieldId)) {
+            return null;
+          }
 
-      if (text) {
-        if (!caption && text.split("\n").length < 2) {
-          // Render large caption if there is no title and it has only one line.
-          caption += `<h4>${this.$util.encodeHTML(text)}</h4>`;
-        } else {
-          // Render small caption otherwise.
-          caption += `<p>${this.$util.encodeHTML(text)}</p>`;
-        }
+          return {
+            fieldId,
+            index,
+            text: metadataText(model, fieldId),
+          };
+        })
+        .filter(Boolean);
+
+      let caption = "";
+
+      for (const field of fields) {
+        caption += `<div class="pswp__dynamic-caption-field pswp__dynamic-caption-field--${field.fieldId}">${this.$util.encodeHTML(field.text)}</div>`;
       }
 
       return this.$util.sanitizeHtml(caption);
@@ -1635,6 +1668,7 @@ export default {
       // Set current slide model.
       if (this.index >= 0 && this.models.length > 0 && this.index < this.models.length) {
         this.model = this.models[this.index];
+        this.syncCurrentPhotoDetails();
       }
 
       // Pause the slideshow if the index of the next slide does not match.
@@ -1642,8 +1676,61 @@ export default {
         this.pauseSlideshow();
       }
 
+      this.syncZoomState();
+
       // Ensure that content is focused.
       this.focusContent();
+    },
+    syncCurrentPhotoDetails() {
+      const uid = this.model?.UID;
+
+      if (!uid) {
+        this.detailRequestUid = "";
+        return;
+      }
+
+      this.detailRequestUid = uid;
+
+      new Photo()
+        .find(uid)
+        .then((photo) => {
+          if (this.detailRequestUid !== uid) {
+            return;
+          }
+
+          this.model = photo;
+          this.refreshCurrentCaption();
+        })
+        .catch(() => {
+          if (this.detailRequestUid === uid) {
+            this.refreshCurrentCaption();
+          }
+        });
+    },
+    activeCaptionModel(slide) {
+      const index = typeof slide?.index === "number" ? slide.index : this.index;
+      const slideModel = this.models[index];
+
+      if (slideModel?.UID && this.model?.UID === slideModel.UID) {
+        return this.model;
+      }
+
+      return slideModel || this.model;
+    },
+    refreshCurrentCaption() {
+      const pswp = this.pswp();
+      const slide = pswp?.currSlide;
+      const captionElement = slide?.dynamicCaption?.element;
+
+      if (!slide || !captionElement) {
+        return;
+      }
+
+      const html = this.formatCaption(this.activeCaptionModel(slide));
+      captionElement.innerHTML = html;
+
+      this.captionPlugin?.updateCaptionPosition?.(slide);
+      this.captionPlugin?.showCaption?.(slide);
     },
     // Called when the user clicks on the PhotoSwipe lightbox background,
     // see https://photoswipe.com/click-and-tap-actions.
@@ -1845,7 +1932,7 @@ export default {
 
       const pswp = this.pswp();
 
-      const isZoomable = pswp.currSlide.isZoomable();
+      const isZoomable = this.canToggleZoom(pswp.currSlide);
 
       if (isZoomable) {
         pswp.currSlide.toggleZoom();
@@ -1868,6 +1955,59 @@ export default {
         ev.preventDefault();
         this.toggleControls();
       }
+    },
+    // Called when the current slide zoom level changes.
+    onZoomPanUpdate() {
+      this.syncZoomState();
+    },
+    // Returns true if the active slide can toggle between distinct zoom levels.
+    canToggleZoom(slide) {
+      if (!slide?.zoomLevels) {
+        return false;
+      }
+
+      const initial = Number(slide.zoomLevels.initial);
+      const secondary = Number(slide.zoomLevels.secondary);
+
+      return Number.isFinite(initial) && Number.isFinite(secondary) && secondary > initial + 0.001;
+    },
+    // Sync the current zoom state from the active PhotoSwipe slide.
+    syncZoomState() {
+      const slide = this.pswp()?.currSlide;
+      const canToggleZoom = this.canToggleZoom(slide);
+
+      this.isZoomable = canToggleZoom;
+
+      if (!canToggleZoom || !slide?.zoomLevels) {
+        this.isZoomedIn = false;
+        this.updateZoomToggleButton();
+        return;
+      }
+
+      this.isZoomedIn = slide.currZoomLevel > slide.zoomLevels.initial + 0.001;
+      this.updateZoomToggleButton();
+    },
+    // Update the zoom toggle label so the next action is explicit.
+    updateZoomToggleButton() {
+      if (!(this.zoomToggleElement instanceof HTMLElement)) {
+        return;
+      }
+
+      const label = this.isZoomedIn ? this.$gettext("Zoom out") : this.$gettext("Zoom in");
+
+      this.zoomToggleElement.setAttribute("title", label);
+      this.zoomToggleElement.setAttribute("aria-label", label);
+    },
+    // Toggle the zoom level of the current slide.
+    toggleZoom() {
+      const slide = this.pswp()?.currSlide;
+
+      if (!slide || typeof slide.toggleZoom !== "function" || !this.canToggleZoom(slide)) {
+        return;
+      }
+
+      slide.toggleZoom();
+      this.syncZoomState();
     },
     // Toggles fullscreen mode.
     toggleFullscreen() {

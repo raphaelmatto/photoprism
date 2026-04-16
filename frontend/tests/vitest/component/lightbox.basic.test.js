@@ -1,5 +1,5 @@
 import { mount, config as VTUConfig } from "@vue/test-utils";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as contexts from "options/contexts";
 import { nextTick } from "vue";
 import PLightbox from "component/lightbox.vue";
@@ -134,5 +134,197 @@ describe("PLightbox (low-mock, jsdom-friendly)", () => {
     await nextTick();
 
     expect(wrapper.find(".v-dialog-stub").attributes("data-theme")).toBe("nordic");
+  });
+
+  it("only exposes zoom toggling when the current slide has a distinct zoom target", () => {
+    const wrapper = mountLightbox();
+    const button = document.createElement("button");
+    const methods = wrapper.vm.$options.methods;
+    const baseContext = {
+      isZoomable: true,
+      isZoomedIn: true,
+      zoomToggleElement: button,
+      $gettext: VTUConfig.global.mocks.$gettext,
+      updateZoomToggleButton() {
+        return methods.updateZoomToggleButton.call(this);
+      },
+      canToggleZoom(slide) {
+        return methods.canToggleZoom.call(this, slide);
+      },
+    };
+
+    const noOpZoomContext = {
+      ...baseContext,
+      pswp: () => ({
+        currSlide: {
+          currZoomLevel: 1,
+          zoomLevels: {
+            initial: 1,
+            secondary: 1,
+          },
+        },
+      }),
+    };
+
+    methods.syncZoomState.call(noOpZoomContext);
+
+    expect(noOpZoomContext.isZoomable).toBe(false);
+    expect(noOpZoomContext.isZoomedIn).toBe(false);
+    expect(button.getAttribute("title")).toBe("Zoom in");
+
+    const zoomedContext = {
+      ...baseContext,
+      pswp: () => ({
+        currSlide: {
+          currZoomLevel: 1.6,
+          zoomLevels: {
+            initial: 1,
+            secondary: 2,
+          },
+        },
+      }),
+    };
+
+    methods.syncZoomState.call(zoomedContext);
+
+    expect(zoomedContext.isZoomable).toBe(true);
+    expect(zoomedContext.isZoomedIn).toBe(true);
+    expect(button.getAttribute("title")).toBe("Zoom out");
+  });
+
+  it("formats under-image text from the configured card metadata layout", () => {
+    const wrapper = mountLightbox({
+      global: {
+        mocks: {
+          $config: {
+            ...VTUConfig.global.mocks.$config,
+            getSettings: () => ({
+              features: {
+                edit: true,
+                favorites: true,
+                download: true,
+                archive: true,
+              },
+              display: {
+                metadata: {
+                  cards: ["keywords", "date", "caption"],
+                },
+              },
+            }),
+          },
+        },
+      },
+    });
+
+    const html = wrapper.vm.$options.methods.formatCaption.call(wrapper.vm.$.proxy, {
+      Caption: "Test caption",
+      DetailsKeywords: "diana, raphe",
+      TakenAtLocal: "2026-01-11T12:44:32Z",
+      TimeZone: "America/New_York",
+    });
+
+    expect(html).toContain("pswp__dynamic-caption-field--keywords");
+    expect(html).toContain("diana, raphe");
+    expect(html).toContain("Jan 11, 2026");
+    expect(html).toContain("Test caption");
+  });
+
+  it("hides empty under-image fields from the configured card metadata layout", () => {
+    const wrapper = mountLightbox({
+      global: {
+        mocks: {
+          $config: {
+            ...VTUConfig.global.mocks.$config,
+            getSettings: () => ({
+              features: {
+                edit: true,
+                favorites: true,
+                download: true,
+                archive: true,
+              },
+              display: {
+                metadata: {
+                  cards: ["keywords", "caption"],
+                },
+              },
+            }),
+          },
+        },
+      },
+    });
+
+    const html = wrapper.vm.$options.methods.formatCaption.call(wrapper.vm.$.proxy, {
+      Caption: "Only caption",
+      DetailsKeywords: "",
+    });
+
+    expect(html).not.toContain("pswp__dynamic-caption-field--keywords");
+    expect(html).toContain("Only caption");
+  });
+
+  it("uses richer current-photo metadata for captions without replacing slide models", async () => {
+    const wrapper = mountLightbox({
+      global: {
+        mocks: {
+          $config: {
+            ...VTUConfig.global.mocks.$config,
+            getSettings: () => ({
+              features: {
+                edit: true,
+                favorites: true,
+                download: true,
+                archive: true,
+              },
+              display: {
+                metadata: {
+                  cards: ["keywords", "caption"],
+                },
+              },
+            }),
+          },
+        },
+      },
+    });
+
+    const slideModel = {
+      UID: "photo-1",
+      Caption: "",
+      DetailsKeywords: "",
+      Thumbs: {
+        fit_1920: {
+          src: "/static/example.jpg",
+          w: 1920,
+          h: 1080,
+        },
+      },
+      Hash: "abc123",
+    };
+    const detailPhoto = {
+      UID: "photo-1",
+      Caption: "Detailed caption",
+      DetailsKeywords: "diana, raphe",
+      TakenAtLocal: "2026-01-11T12:44:32Z",
+      TimeZone: "America/New_York",
+    };
+
+    const slide = { index: 0 };
+
+    await wrapper.setData({
+      model: detailPhoto,
+      models: [slideModel],
+      index: 0,
+    });
+
+    const activeModel = wrapper.vm.$options.methods.activeCaptionModel.call(wrapper.vm.$.proxy, slide);
+    const html = wrapper.vm.$options.methods.formatCaption.call(wrapper.vm.$.proxy, activeModel);
+    await nextTick();
+
+    expect(wrapper.vm.$data.models[0]).toEqual(slideModel);
+    expect(wrapper.vm.$data.models[0].Thumbs.fit_1920.src).toBe("/static/example.jpg");
+    expect(wrapper.vm.$data.model.UID).toBe("photo-1");
+    expect(wrapper.vm.$data.model.DetailsKeywords).toBe("diana, raphe");
+    expect(wrapper.vm.$data.model.Caption).toBe("Detailed caption");
+    expect(activeModel).toBe(wrapper.vm.$data.model);
+    expect(html).toContain("diana, raphe");
   });
 });
