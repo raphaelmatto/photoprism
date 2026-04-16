@@ -8,3 +8,8 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
     transition: background-color 9999s !important;
 }
+
+body.theme-raphe .v-field--variant-solo-filled,
+#photoprism.theme-raphe .v-field--variant-solo-filled {
+    background-color: rgb(var(--v-theme-secondary-light));
+}

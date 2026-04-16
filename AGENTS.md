@@ -1,6 +1,6 @@
 # PhotoPrism® — Repository Guidelines
 
-**Last Updated:** April 15, 2026
+**Last Updated:** April 16, 2026
 
 ## Purpose
 
@@ -123,7 +123,21 @@ console.log(inContainer ? "container" : "host");
 - Pushes to `production` trigger [`.github/workflows/build-production.yml`](.github/workflows/build-production.yml), which publishes the ARM64 production image to `ghcr.io/raphaelmatto/photoprism`.
 - The workflow currently builds from the standard [`docker/photoprism/questing/Dockerfile`](docker/photoprism/questing/Dockerfile), not a fork-specific Dockerfile.
 - Published tags include the mutable `latest` tag and immutable `sha-<commit>` tags; prefer the SHA tag when you need exact rollout or rollback tracking.
+- When a production host must refresh only the mutable `latest` tag, use the human-facing command block in [`README.md`](README.md) to remove `ghcr.io/raphaelmatto/photoprism:latest`, pull it again, and restart Compose without pruning unrelated images.
 - Human-oriented deployment steps live in [`README.md`](README.md); keep `AGENTS.md` concise and operational.
+
+### Fork Branch Policy
+
+- Treat `production` as the fork's integration and deploy branch. It MUST contain all changes that are running in production and all code from feature branches with open upstream PRs.
+- Start each new feature on a short-lived branch created from `production`, for example `feature/<name>`.
+- Keep commits intentionally scoped while developing:
+  - upstream-safe commits that can be proposed to PhotoPrism.
+  - fork-only commits for deploy workflow, README notes, theme tweaks, or other changes that should stay in the fork.
+- Do not rely on separating mixed work later. Prefer multiple small commits over one large mixed commit.
+- When a feature is ready:
+  - merge or fast-forward the full feature branch back into `production` so the deploy branch stays complete.
+  - create the upstream PR branch by cherry-picking only the upstream-safe commits onto the appropriate upstream base, usually `develop`.
+- Before starting the next feature, make sure `production` has no uncommitted feature work. Leaving large mixed diffs in the working tree increases conflict risk and makes upstream PR extraction more expensive.
 
 - **Host mode** (agent runs on the host; agent MAY manage Docker lifecycle):
   - Build local dev image (once): `make docker-build`

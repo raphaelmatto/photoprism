@@ -22,9 +22,10 @@ Production images now build from the standard `docker/photoprism/questing/Docker
 
 | Branch | Purpose |
 |--------|---------|
-| `develop` | Active development. Synced with `upstream/develop`. |
-| `production` | Stable deploy branch. Pushes trigger CI to build and push the Docker image. |
-| `feature/*` | Feature branches for PRs to upstream. |
+| `production` | Integration and deploy branch. It should always contain everything running on the server, including code from feature branches with open upstream PRs. |
+| `feature/*` | Short-lived feature branches created from `production`. These branches may contain both upstream-safe commits and fork-only commits while the feature is being built. |
+| `pr/*` | Optional clean branches or worktrees used only to prepare a scoped upstream PR from cherry-picked upstream-safe commits. |
+| `develop` | Local sync branch for `upstream/develop` when needed. Do not treat this as the fork's main integration branch. |
 | `release` | Upstream release branch (untouched). |
 
 ## Remotes
@@ -45,6 +46,20 @@ A GitHub Actions workflow (`.github/workflows/build-production.yml`) builds and 
 - **Build time**: ~5 minutes
 
 The workflow uses `GITHUB_TOKEN` for registry auth, publishes both `latest` and commit-specific `sha-...` tags, and can also be triggered manually with `workflow_dispatch`.
+
+## Branch Policy
+
+Use this workflow to keep upstream contribution work cheap while preserving a healthy deploy branch:
+
+1. Start every new feature from `production`.
+2. Develop on a short-lived `feature/<name>` branch, not directly on `develop`.
+3. Keep commits intentionally separated:
+   - upstream-safe commits that could be submitted to PhotoPrism.
+   - fork-only commits for deploy workflow, documentation, theme tweaks, or anything else that should remain fork-specific.
+4. Merge or fast-forward the full feature branch back into `production` so `production` always remains a superset of open PR branches.
+5. Create the upstream PR branch by cherry-picking only the upstream-safe commits onto `upstream/develop` or another appropriate upstream base.
+
+The main rule is: do not rely on untangling a large mixed working tree later. Small, scoped commits are much cheaper to reuse than file-by-file extraction after the fact.
 
 ## How to Deploy
 
@@ -70,9 +85,9 @@ The workflow uses `GITHUB_TOKEN` for registry auth, publishes both `latest` and 
 After testing changes locally:
 
 ```bash
-# 1. Merge to production
+# 1. Merge the finished feature branch into production
 git checkout production
-git merge develop
+git merge feature/<name>
 git push origin production
 
 # 2. Wait ~5 minutes for GitHub Actions to build
@@ -81,6 +96,17 @@ git push origin production
 docker compose pull
 docker compose up -d
 ```
+
+If the server keeps reusing an older local copy of `ghcr.io/raphaelmatto/photoprism:latest`, replace just that tag before restarting:
+
+```bash
+docker compose -f prod.yml down
+docker rmi -f ghcr.io/raphaelmatto/photoprism:latest
+docker pull ghcr.io/raphaelmatto/photoprism:latest
+docker compose -f prod.yml up -d
+```
+
+This is useful when disk pressure or local tag reuse prevents Docker from fetching the newest `latest` image cleanly.
 
 For rollback or pinned deploys, use an immutable image tag instead of `latest`:
 
@@ -106,7 +132,7 @@ git merge upstream/develop
 git push origin develop
 ```
 
-Then merge to `production` and deploy when ready.
+When a new upstream change should also land in your deploy branch, merge or cherry-pick it from `develop` into `production` deliberately. Do not treat `develop` as the long-lived place where fork feature work accumulates.
 
 ## Recommended Server Settings
 
