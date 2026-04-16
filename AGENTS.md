@@ -138,6 +138,9 @@ console.log(inContainer ? "container" : "host");
   - merge or fast-forward the full feature branch back into `production` so the deploy branch stays complete.
   - create the upstream PR branch by cherry-picking only the upstream-safe commits onto the appropriate upstream base, usually `develop`.
 - Before starting the next feature, make sure `production` has no uncommitted feature work. Leaving large mixed diffs in the working tree increases conflict risk and makes upstream PR extraction more expensive.
+- Unless the upstream PR is explicitly about fork operations, treat `README.md`, `AGENTS.md`, and `.github/workflows/build-production.yml` as fork-only and keep them out of upstream PR branches.
+- Before opening or updating an upstream PR, run `./scripts/check-upstream-pr-safety.sh develop <branch>` from the repo root.
+- The script derives the fork owner from `origin` and flags fork registry URLs, fork GitHub URLs, SSH fork remotes, and absolute host paths. Use `UPSTREAM_PR_EXTRA_PATTERN='name-one|name-two|town-name'` for local privacy terms that should never appear in a public PR.
 
 - **Host mode** (agent runs on the host; agent MAY manage Docker lifecycle):
   - Build local dev image (once): `make docker-build`

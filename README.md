@@ -61,6 +61,34 @@ Use this workflow to keep upstream contribution work cheap while preserving a he
 
 The main rule is: do not rely on untangling a large mixed working tree later. Small, scoped commits are much cheaper to reuse than file-by-file extraction after the fact.
 
+For upstream PR branches, treat these files as fork-only unless the PR is explicitly about fork operations:
+
+- `README.md`
+- `AGENTS.md`
+- `.github/workflows/build-production.yml`
+
+Before opening or updating an upstream PR, run:
+
+```bash
+./scripts/check-upstream-pr-safety.sh develop origin/feature/<name>
+```
+
+The script automatically flags:
+
+- fork-only files in the diff
+- fork registry and fork GitHub URLs derived from the `origin` remote
+- SSH fork remotes
+- absolute host paths such as `/Users/...`, `/Volumes/...`, and `/private/tmp/...`
+
+You can add a repo-local privacy regex for names, places, or other sensitive strings without committing those terms:
+
+```bash
+UPSTREAM_PR_EXTRA_PATTERN='name-one|name-two|town-name' \
+  ./scripts/check-upstream-pr-safety.sh develop origin/feature/<name>
+```
+
+If the script fails, either move the fork-only change back to `production` or replace the fixture/text with a generic placeholder before pushing the PR branch.
+
 ## How to Deploy
 
 ### Server Setup (one-time)
