@@ -143,6 +143,27 @@
               >
               </v-checkbox>
             </v-col>
+
+            <v-col cols="12" sm="4" class="px-2 pb-2 pt-2">
+              <v-text-field
+                v-model.number="settings.display.lightboxBorder"
+                :disabled="isDemo"
+                class="input-lightbox-border"
+                color="surface-variant"
+                density="compact"
+                type="number"
+                min="0"
+                step="0.25"
+                variant="underlined"
+                :label="$gettext('Lightbox Border Width')"
+                :hint="$gettext('Set the image border width in the viewer. Use 0 to hide the border.')"
+                prepend-icon="mdi-border-all-variant"
+                persistent-hint
+                @blur="onLightboxBorderChange"
+                @keyup.enter="onLightboxBorderChange"
+              >
+              </v-text-field>
+            </v-col>
           </v-row>
         </v-card-actions>
       </v-card>
@@ -395,6 +416,21 @@ export default {
       }
 
       this.settings.display.metadata[view] = Array.isArray(layout) ? layout.slice() : [];
+
+      this.onChange();
+    },
+    onLightboxBorderChange() {
+      if (!this.settings.display) {
+        this.settings.display = {};
+      }
+
+      const value = Number(this.settings.display.lightboxBorder);
+
+      if (!Number.isFinite(value)) {
+        this.settings.display.lightboxBorder = 1;
+      } else {
+        this.settings.display.lightboxBorder = Math.max(0, Math.round(value * 100) / 100);
+      }
 
       this.onChange();
     },

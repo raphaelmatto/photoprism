@@ -24,7 +24,7 @@
       ref="packedGrid"
       class="search-results photo-results cards-view packed-view"
       :class="{ 'select-results': selectMode }"
-      :style="{ '--packed-gutter': `${packedGutter}px` }"
+      :style="{ '--packed-gutter': `${packedGutter}px`, '--packed-edge-padding': `${packedEdgePadding}px` }"
     >
       <div v-for="(row, rowIndex) in packedRows" :key="`row-${rowIndex}`" class="packed-row packed-row--cards">
         <div
@@ -128,12 +128,7 @@
           <div v-if="!isSharedView && m.Quality < 3 && context === contexts.Review" class="review" />
           <div class="meta">
             <div class="meta-details meta-fields">
-              <div
-                v-for="item in cardMetadataItems(m, false)"
-                :key="`${m.ID}-${item.key}`"
-                :title="item.label"
-                :class="item.className"
-              >
+              <div v-for="item in cardMetadataItems(m, false)" :key="`${m.ID}-${item.key}`" :title="item.label" :class="item.className">
                 <i v-if="item.showIcon" class="mdi" :class="item.icon" />
                 {{ item.text }}
               </div>
@@ -336,6 +331,7 @@ export default {
       debug,
       trace,
       packedGutter: 8,
+      packedEdgePadding: 4,
       packedTargetRowHeight: this.$isMobile ? 200 : 280,
       packedRows: [],
       resizeObserver: null,
@@ -407,7 +403,7 @@ export default {
         return;
       }
 
-      const containerWidth = Math.floor(container.clientWidth);
+      const containerWidth = this.packedLayoutWidth(container);
 
       if (containerWidth <= 0) {
         return;
@@ -417,6 +413,12 @@ export default {
         gutter: this.packedGutter,
         targetRowHeight: this.packedTargetRowHeight,
       });
+    },
+    packedLayoutWidth(container) {
+      const styles = window.getComputedStyle(container);
+      const paddingStart = Number.parseFloat(styles.paddingInlineStart || styles.paddingLeft || "0") || 0;
+      const paddingEnd = Number.parseFloat(styles.paddingInlineEnd || styles.paddingRight || "0") || 0;
+      return Math.floor(container.clientWidth - paddingStart - paddingEnd);
     },
     packedPreviewStyle(photo, width, height) {
       const thumbSize = choosePackedThumbSize(width, height, this.$config.getSettings().display?.retinaThumbnails);

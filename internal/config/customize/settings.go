@@ -96,6 +96,7 @@ func NewSettings(theme, language, timeZone string) *Settings {
 		Display: DisplaySettings{
 			Originals:        false,
 			ImagePacking:     false,
+			LightboxBorder:   1,
 			RetinaLightbox:   false,
 			RetinaThumbnails: false,
 			Metadata:         NewMetadataLayoutSettings(),
@@ -140,6 +141,10 @@ func (s *Settings) Propagate() {
 
 	if s.Display.Metadata.Lightbox == nil {
 		s.Display.Metadata.Lightbox = defaultMetadata.Lightbox
+	}
+
+	if s.Display.LightboxBorder < 0 {
+		s.Display.LightboxBorder = 0
 	}
 
 	i18n.SetLocale(s.UI.Language)

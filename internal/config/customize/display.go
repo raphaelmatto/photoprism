@@ -4,6 +4,7 @@ package customize
 type DisplaySettings struct {
 	Originals        bool                   `json:"originals" yaml:"Originals"`
 	ImagePacking     bool                   `json:"imagePacking" yaml:"ImagePacking"`
+	LightboxBorder   float64                `json:"lightboxBorder" yaml:"LightboxBorder"`
 	RetinaLightbox   bool                   `json:"retinaLightbox" yaml:"RetinaLightbox"`
 	RetinaThumbnails bool                   `json:"retinaThumbnails" yaml:"RetinaThumbnails"`
 	Metadata         MetadataLayoutSettings `json:"metadata" yaml:"Metadata"`

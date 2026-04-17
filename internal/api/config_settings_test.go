@@ -60,6 +60,20 @@ func TestSaveSettings(t *testing.T) {
 		assert.Equal(t, "filename", gjson.Get(r2.Body.String(), "display.metadata.list.0").String())
 		assert.Equal(t, "fileInfo", gjson.Get(r2.Body.String(), "display.metadata.lightbox.2").String())
 	})
+	t.Run("LightboxBorder", func(t *testing.T) {
+		app, router, _ := NewApiTest()
+
+		GetSettings(router)
+		SaveSettings(router)
+
+		r := PerformRequestWithBody(app, "POST", "/api/v1/settings", `{"display":{"lightboxBorder":2.5}}`)
+		assert.Equal(t, http.StatusOK, r.Code)
+		assert.Equal(t, 2.5, gjson.Get(r.Body.String(), "display.lightboxBorder").Float())
+
+		r2 := PerformRequest(app, "GET", "/api/v1/settings")
+		assert.Equal(t, http.StatusOK, r2.Code)
+		assert.Equal(t, 2.5, gjson.Get(r2.Body.String(), "display.lightboxBorder").Float())
+	})
 	t.Run("AddAIKeywords", func(t *testing.T) {
 		app, router, _ := NewApiTest()
 

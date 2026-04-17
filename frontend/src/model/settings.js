@@ -32,6 +32,7 @@ export class Settings extends Model {
       values.display = {
         originals: false,
         imagePacking: false,
+        lightboxBorder: 1,
         retinaLightbox: false,
         retinaThumbnails: false,
         metadata: {
@@ -47,6 +48,10 @@ export class Settings extends Model {
 
       if (typeof values.display.imagePacking === "undefined") {
         values.display.imagePacking = false;
+      }
+
+      if (typeof values.display.lightboxBorder === "undefined") {
+        values.display.lightboxBorder = 1;
       }
 
       if (typeof values.display.retinaLightbox === "undefined") {

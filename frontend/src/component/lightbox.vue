@@ -11,6 +11,7 @@
     persistent
     tiled
     :theme="lightboxThemeName"
+    :style="lightboxStyle"
     class="p-dialog p-lightbox v-dialog--lightbox no-transition"
     @after-enter="afterEnter"
     @after-leave="afterLeave"
@@ -243,6 +244,16 @@ export default {
     for (let i = 0; i < this.subscriptions.length; i++) {
       this.$event.unsubscribe(this.subscriptions[i]);
     }
+  },
+  computed: {
+    lightboxStyle() {
+      const width = Number(this.$config?.getSettings?.()?.display?.lightboxBorder);
+      const borderWidth = Number.isFinite(width) ? Math.max(0, width) : 1;
+
+      return {
+        "--p-lightbox-border-width": `${borderWidth}px`,
+      };
+    },
   },
   methods: {
     // Opens and initializes the lightbox with the given options.
@@ -1354,12 +1365,9 @@ export default {
             isCustomSVG: true,
             inner:
               `<use class="pswp__icn-shadow pswp__icn-zoom-in" xlink:href="#pswp__icn-zoom-in"></use>` +
-              `<path d="M17.426 19.926a6 6 0 1 1 1.5-1.5L23 22.5 21.5 24l-4.074-4.074z" id="pswp__icn-zoom-in" class="pswp__icn-zoom-in" />` +
-              `<path fill="currentColor" class="pswp__icn-zoom-in pswp__zoom-icn-bar-h" d="M11 16v-2h6v2z"/>` +
-              `<path fill="currentColor" class="pswp__icn-zoom-in pswp__zoom-icn-bar-v" d="M13 12h2v6h-2z"/>` +
+              `<path d="M10,4A6,6 0 0,1 16,10C16,11.3 15.58,12.5 14.88,13.47L20,18.59L18.59,20L13.47,14.88C12.5,15.58 11.3,16 10,16A6,6 0 0,1 4,10A6,6 0 0,1 10,4M10,6A4,4 0 0,0 6,10A4,4 0 0,0 10,14A4,4 0 0,0 14,10A4,4 0 0,0 10,6M9,8H11V9H12V11H11V12H9V11H8V9H9V8Z" id="pswp__icn-zoom-in" class="pswp__icn-zoom-in" />` +
               `<use class="pswp__icn-shadow pswp__icn-zoom-out" xlink:href="#pswp__icn-zoom-out"></use>` +
-              `<path d="M17.426 19.926a6 6 0 1 1 1.5-1.5L23 22.5 21.5 24l-4.074-4.074z" id="pswp__icn-zoom-out" class="pswp__icn-zoom-out" />` +
-              `<path fill="currentColor" class="pswp__icn-zoom-out pswp__zoom-icn-bar-h" d="M11 16v-2h6v2z"/>`,
+              `<path d="M10,4A6,6 0 0,1 16,10C16,11.3 15.58,12.5 14.88,13.47L20,18.59L18.59,20L13.47,14.88C12.5,15.58 11.3,16 10,16A6,6 0 0,1 4,10A6,6 0 0,1 10,4M10,6A4,4 0 0,0 6,10A4,4 0 0,0 10,14A4,4 0 0,0 14,10A4,4 0 0,0 10,6M8,9H12V11H8V9Z" id="pswp__icn-zoom-out" class="pswp__icn-zoom-out" />`,
             outlineID: "pswp__icn-zoom-in",
             size: 24,
           },

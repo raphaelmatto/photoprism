@@ -67,6 +67,7 @@ Download:
 Display:
   Originals: false
   ImagePacking: false
+  LightboxBorder: 1
   RetinaLightbox: false
   RetinaThumbnails: false
   Metadata:

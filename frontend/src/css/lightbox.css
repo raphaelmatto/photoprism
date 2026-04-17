@@ -3,6 +3,7 @@
 .p-lightbox {
     --p-lightbox-canvas: rgb(var(--v-theme-background));
     --p-lightbox-surface: rgb(var(--v-theme-surface));
+    --p-lightbox-border-width: 1px;
     --p-lightbox-on-surface: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
     --p-lightbox-on-surface-medium: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
     --p-lightbox-frame: rgba(var(--v-theme-on-surface), var(--v-lightbox-frame-opacity, 0.3));
@@ -210,7 +211,18 @@
 }
 
 .pswp__img,
-.pswp__media .pswp__image,
+.pswp__media .pswp__image {
+    object-fit: contain;
+    max-width: 100%;
+    max-height: 100vh;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    box-shadow: 0 0 0 var(--p-lightbox-border-width) var(--p-lightbox-frame);
+    outline: 0;
+}
+
 .pswp__media .pswp__video {
     object-fit: contain;
     max-width: 100%;
@@ -218,9 +230,10 @@
     width: auto;
     height: 100%;
     box-sizing: border-box;
-    background-color: var(--p-lightbox-surface);
-    border: thin solid var(--p-lightbox-frame);
+    border: 0;
     border-radius: 5px;
+    background: transparent;
+    box-shadow: 0 0 0 var(--p-lightbox-border-width) var(--p-lightbox-frame);
     outline: 0;
 }
 
@@ -504,6 +517,10 @@
 .pswp__top-bar .pswp__button--mdi .pswp__icn {
     width: 22px;
     height: 22px;
+}
+
+.pswp__top-bar .pswp__button--zoom-toggle .pswp__icn {
+    overflow: visible;
 }
 
 .pswp__top-bar .pswp__button--info-button .pswp__icn {
