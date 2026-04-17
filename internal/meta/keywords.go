@@ -3,6 +3,7 @@ package meta
 import (
 	"strings"
 
+	"github.com/photoprism/photoprism/internal/entity"
 	"github.com/photoprism/photoprism/pkg/media/projection"
 
 	"github.com/photoprism/photoprism/pkg/txt"
@@ -28,9 +29,14 @@ func (w Keywords) String() string {
 // AutoKeywords lists keywords we automatically infer from descriptions or EXIF flags.
 var AutoKeywords = []string{KeywordHdr, KeywordBurst, KeywordPanorama, KeywordEquirectangular}
 
+// autoKeywordsEnabled reports whether automatically generated indexing keywords are enabled.
+func autoKeywordsEnabled() bool {
+	return entity.AddAIKeywordsEnabled()
+}
+
 // AddKeywords appends keywords.
 func (data *Data) AddKeywords(w string) {
-	w = strings.ToLower(SanitizeMeta(w))
+	w = SanitizeMeta(w)
 
 	if len(w) < 1 {
 		return

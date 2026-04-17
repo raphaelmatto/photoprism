@@ -34,6 +34,17 @@ var MetadataEstimateInterval = 24 * 7 * time.Hour // 7 Days
 
 var photoMutex = sync.Mutex{}
 var labelKeywordsSkipSrc = []string{SrcTitle, SrcCaption, SrcSubject, SrcKeyword}
+var addAIKeywords = true
+
+// SetAddAIKeywords configures whether automatically generated labels should contribute searchable keywords.
+func SetAddAIKeywords(enabled bool) {
+	addAIKeywords = enabled
+}
+
+// AddAIKeywordsEnabled reports whether automatically generated keywords should be added during indexing.
+func AddAIKeywordsEnabled() bool {
+	return addAIKeywords
+}
 
 // MapKey builds a deterministic indexing key from the capture timestamp and spatial cell identifier.
 func MapKey(takenAt time.Time, cellId string) string {
@@ -185,7 +196,7 @@ func SavePhotoForm(m *Photo, form form.Photo) error {
 			return err
 		}
 
-		details.Keywords = strings.Join(txt.UniqueWords(txt.Words(details.Keywords)), ", ")
+		details.Keywords = strings.Join(txt.UniqueWordsPreservingCase(txt.Words(details.Keywords)), ", ")
 	}
 
 	if locChanged && (m.PlaceSrc == SrcManual || m.PlaceSrc == SrcBatch) {
@@ -193,10 +204,10 @@ func SavePhotoForm(m *Photo, form form.Photo) error {
 
 		m.AddLabels(labels)
 
-		w := txt.UniqueWords(txt.Words(details.Keywords))
+		w := txt.UniqueWordsPreservingCase(txt.Words(details.Keywords))
 		w = append(w, locKeywords...)
 
-		details.Keywords = strings.Join(txt.UniqueWords(w), ", ")
+		details.Keywords = strings.Join(txt.UniqueWordsPreservingCase(w), ", ")
 	}
 
 	if err := m.UpdateLabels(); err != nil {
@@ -507,6 +518,10 @@ func (m *Photo) LabelKeywords() (result []string) {
 			continue
 		}
 
+		if !addAIKeywords && (l.LabelSrc == SrcAuto || SrcGenerated[l.LabelSrc] > 0) {
+			continue
+		}
+
 		result = append(result, txt.Keywords(l.Label.LabelName)...)
 
 		for _, c := range l.Label.LabelCategories {
@@ -580,7 +595,7 @@ func (m *Photo) BeforeSave(scope *gorm.Scope) error {
 func (m *Photo) RemoveKeyword(w string) error {
 	details := m.GetDetails()
 
-	words := txt.RemoveFromWords(txt.Words(details.Keywords), w)
+	words := txt.RemoveFromWordsPreservingCase(txt.Words(details.Keywords), w)
 	details.Keywords = strings.Join(words, ", ")
 
 	return nil
@@ -600,7 +615,7 @@ func (m *Photo) DropKeywords(remove []string) error {
 
 	for _, w := range remove {
 		if w != "" {
-			words = txt.RemoveFromWords(words, w)
+			words = txt.RemoveFromWordsPreservingCase(words, w)
 		}
 	}
 

@@ -19,6 +19,12 @@ describe("model/settings", () => {
     expect(model.display.retinaThumbnails).toBe(false);
   });
 
+  it("should default add AI keywords to true", () => {
+    const model = new Settings({});
+
+    expect(model.index.addAIKeywords).toBe(true);
+  });
+
   it("should default metadata layouts for cards, list, and lightbox", () => {
     const model = new Settings({});
 

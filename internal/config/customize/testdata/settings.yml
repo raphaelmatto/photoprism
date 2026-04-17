@@ -51,6 +51,7 @@ Index:
   Convert: true
   Rescan: false
   SkipArchived: false
+  AddAIKeywords: true
 Stack:
   UUID: true
   Meta: true

@@ -380,12 +380,14 @@ func (data *Data) Exiftool(jsonData []byte, originalName string) (err error) {
 		data.InstanceID = rnd.SanitizeUUID(data.InstanceID)
 	}
 
-	if projection.Equirectangular.Equal(data.Projection) {
+	if autoKeywordsEnabled() && projection.Equirectangular.Equal(data.Projection) {
 		data.AddKeywords(KeywordPanorama)
 	}
 
 	if data.Caption != "" {
-		data.AutoAddKeywords(data.Caption)
+		if autoKeywordsEnabled() {
+			data.AutoAddKeywords(data.Caption)
+		}
 		data.Caption = SanitizeCaption(data.Caption)
 	}
 

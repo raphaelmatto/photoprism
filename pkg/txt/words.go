@@ -135,6 +135,28 @@ func UniqueWords(words []string) (results []string) {
 	return results
 }
 
+// UniqueWordsPreservingCase sorts and filters a string slice for unique words while keeping the first casing variant.
+func UniqueWordsPreservingCase(words []string) (results []string) {
+	last := ""
+
+	SortCaseInsensitive(words)
+
+	for _, original := range words {
+		w := strings.Trim(original, "- '")
+		key := strings.ToLower(w)
+
+		if w == "" || len(key) < 2 && IsLatin(key) || key == last {
+			continue
+		}
+
+		last = key
+
+		results = append(results, w)
+	}
+
+	return results
+}
+
 // RemoveFromWords removes words from a string slice and returns the sorted result.
 func RemoveFromWords(words []string, remove string) (results []string) {
 	if remove == "" {
@@ -161,6 +183,33 @@ func RemoveFromWords(words []string, remove string) (results []string) {
 	return results
 }
 
+// RemoveFromWordsPreservingCase removes words from a string slice and returns the sorted result while keeping original casing.
+func RemoveFromWordsPreservingCase(words []string, remove string) (results []string) {
+	if remove == "" {
+		return words
+	}
+
+	remove = strings.ToLower(remove)
+	last := ""
+
+	SortCaseInsensitive(words)
+
+	for _, original := range words {
+		w := strings.Trim(original, "- '")
+		key := strings.ToLower(w)
+
+		if len(key) < 2 && IsLatin(key) || key == last || strings.Contains(remove, key) {
+			continue
+		}
+
+		last = key
+
+		results = append(results, w)
+	}
+
+	return results
+}
+
 // AddToWords add words to a string slice and returns the sorted result.
 func AddToWords(existing []string, words string) []string {
 	w := Words(words)
@@ -169,7 +218,7 @@ func AddToWords(existing []string, words string) []string {
 		return existing
 	}
 
-	return UniqueWords(append(existing, w...))
+	return UniqueWordsPreservingCase(append(existing, w...))
 }
 
 // MergeWords merges two keyword strings separated by ", ".

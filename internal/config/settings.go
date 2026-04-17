@@ -63,6 +63,8 @@ func (c *Config) Settings() *customize.Settings {
 		c.settings.Features.Import = false
 	}
 
+	entity.SetAddAIKeywords(c.settings.Index.AIKeywordsEnabled())
+
 	return c.settings
 }
 

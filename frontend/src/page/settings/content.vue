@@ -53,6 +53,22 @@
               >
               </v-checkbox>
             </v-col>
+
+            <v-col cols="12" sm="4">
+              <v-checkbox
+                v-model="settings.index.addAIKeywords"
+                :disabled="isDemo"
+                class="ma-0 pa-0 input-add-ai-keywords"
+                density="compact"
+                color="surface-variant"
+                :label="$gettext('Add AI Keywords')"
+                :hint="$gettext('Add searchable keywords from AI-generated labels during indexing and import.')"
+                prepend-icon="mdi-tag-search"
+                persistent-hint
+                @update:model-value="onChange"
+              >
+              </v-checkbox>
+            </v-col>
           </v-row>
         </v-card-actions>
       </v-card>

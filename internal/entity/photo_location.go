@@ -438,10 +438,10 @@ func (m *Photo) SaveLocation() error {
 
 	m.AddLabels(labels)
 
-	w := txt.UniqueWords(txt.Words(m.GetDetails().Keywords))
+	w := txt.UniqueWordsPreservingCase(txt.Words(m.GetDetails().Keywords))
 	w = append(w, locKeywords...)
 
-	m.GetDetails().Keywords = strings.Join(txt.UniqueWords(w), ", ")
+	m.GetDetails().Keywords = strings.Join(txt.UniqueWordsPreservingCase(w), ", ")
 
 	if err := m.UpdateKeywordLabels(); err != nil {
 		log.Errorf("photo: %s %s while updating keyword labels", m.String(), err)

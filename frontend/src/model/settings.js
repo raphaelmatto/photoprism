@@ -19,6 +19,14 @@ export class Settings extends Model {
       values.maps.style = "";
     }
 
+    if (!values.index) {
+      values.index = {
+        addAIKeywords: true,
+      };
+    } else if (typeof values.index.addAIKeywords === "undefined" || values.index.addAIKeywords === null) {
+      values.index.addAIKeywords = true;
+    }
+
     // Ensure display settings exist with defaults.
     if (!values.display) {
       values.display = {

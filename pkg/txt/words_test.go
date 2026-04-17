@@ -122,14 +122,18 @@ func TestFilenameWords(t *testing.T) {
 func TestAddToWords(t *testing.T) {
 	t.Run("IMALazyBRoWnFox", func(t *testing.T) {
 		result := AddToWords([]string{"foo", "bar", "fox"}, "Yellow banana, apple; pan-pot")
-		assert.Equal(t, []string{"apple", "banana", "bar", "foo", "fox", "pan-pot", "yellow"}, result)
+		assert.Equal(t, []string{"apple", "banana", "bar", "foo", "fox", "pan-pot", "Yellow"}, result)
+	})
+	t.Run("PreservesCase", func(t *testing.T) {
+		result := AddToWords([]string{"FooBar"}, "BAZ; pro")
+		assert.Equal(t, []string{"BAZ", "FooBar", "pro"}, result)
 	})
 }
 
 func TestMergeWords(t *testing.T) {
 	t.Run("IMALazyBRoWnFox", func(t *testing.T) {
 		result := MergeWords("I'm a lazy-BRoWN fox!", "Yellow banana, apple; pan-pot")
-		assert.Equal(t, "apple, banana, fox, i'm, lazy-brown, pan-pot, yellow", result)
+		assert.Equal(t, "apple, banana, fox, I'm, lazy-BRoWN, pan-pot, Yellow", result)
 	})
 }
 
@@ -245,6 +249,20 @@ func TestRemoveFromWords(t *testing.T) {
 	t.Run("Empty", func(t *testing.T) {
 		result := RemoveFromWords([]string{"lazy", "jpg", "Brown", "apple"}, "")
 		assert.Equal(t, []string{"lazy", "jpg", "Brown", "apple"}, result)
+	})
+}
+
+func TestUniqueWordsPreservingCase(t *testing.T) {
+	t.Run("Many", func(t *testing.T) {
+		result := UniqueWordsPreservingCase([]string{"lazy", "jpg", "Brown", "apple", "brown", "new-york", "JPG"})
+		assert.Equal(t, []string{"apple", "Brown", "jpg", "lazy", "new-york"}, result)
+	})
+}
+
+func TestRemoveFromWordsPreservingCase(t *testing.T) {
+	t.Run("BrownApple", func(t *testing.T) {
+		result := RemoveFromWordsPreservingCase([]string{"lazy", "jpg", "Brown", "apple", "new-york"}, "brown apple")
+		assert.Equal(t, []string{"jpg", "lazy", "new-york"}, result)
 	})
 }
 

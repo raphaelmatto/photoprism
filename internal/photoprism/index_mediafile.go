@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -53,6 +52,8 @@ func (ind *Index) UserMediaFile(m *MediaFile, o IndexOptions, originalName, phot
 
 	var photoQuery, fileQuery *gorm.DB
 	var locKeywords []string
+	var explicitKeywords []string
+	metadataKeywordsLoaded := false
 
 	file, primaryFile := entity.File{}, entity.File{}
 
@@ -257,6 +258,11 @@ func (ind *Index) UserMediaFile(m *MediaFile, o IndexOptions, originalName, phot
 
 	// Fetch photo details such as keywords, subject, and artist.
 	details := photo.GetDetails()
+	setKeywords := func(value string, src entity.Src) {
+		metadataKeywordsLoaded = true
+		explicitKeywords = append(explicitKeywords, txt.Words(value)...)
+		details.SetKeywords(value, src)
+	}
 
 	// Try to recover photo metadata from backup if not exists.
 	if !photoExists {
@@ -483,7 +489,7 @@ func (ind *Index) UserMediaFile(m *MediaFile, o IndexOptions, originalName, phot
 			photo.SetCoordinates(data.Lat, data.Lng, data.Altitude, entity.SrcXmp)
 
 			// Update metadata details.
-			details.SetKeywords(data.Keywords.String(), entity.SrcXmp)
+			setKeywords(data.Keywords.String(), entity.SrcXmp)
 			details.SetNotes(data.Notes, entity.SrcXmp)
 			details.SetSubject(data.Subject, entity.SrcXmp)
 			details.SetArtist(data.Artist, entity.SrcXmp)
@@ -509,7 +515,7 @@ func (ind *Index) UserMediaFile(m *MediaFile, o IndexOptions, originalName, phot
 			photo.SetCameraSerial(data.CameraSerial)
 
 			// Update metadata details.
-			details.SetKeywords(data.Keywords.String(), entity.SrcMeta)
+			setKeywords(data.Keywords.String(), entity.SrcMeta)
 			details.SetNotes(data.Notes, entity.SrcMeta)
 			details.SetSubject(data.Subject, entity.SrcMeta)
 			details.SetArtist(data.Artist, entity.SrcMeta)
@@ -605,7 +611,7 @@ func (ind *Index) UserMediaFile(m *MediaFile, o IndexOptions, originalName, phot
 			photo.SetTakenAt(data.TakenAt, data.TakenAtLocal, data.TimeZone, entity.SrcMeta)
 
 			// Update metadata details.
-			details.SetKeywords(data.Keywords.String(), entity.SrcMeta)
+			setKeywords(data.Keywords.String(), entity.SrcMeta)
 			details.SetNotes(data.Notes, entity.SrcMeta)
 			details.SetSubject(data.Subject, entity.SrcMeta)
 			details.SetArtist(data.Artist, entity.SrcMeta)
@@ -659,7 +665,7 @@ func (ind *Index) UserMediaFile(m *MediaFile, o IndexOptions, originalName, phot
 			photo.SetTakenAt(data.TakenAt, data.TakenAtLocal, data.TimeZone, entity.SrcMeta)
 
 			// Update metadata details.
-			details.SetKeywords(data.Keywords.String(), entity.SrcMeta)
+			setKeywords(data.Keywords.String(), entity.SrcMeta)
 			details.SetNotes(data.Notes, entity.SrcMeta)
 			details.SetSubject(data.Subject, entity.SrcMeta)
 			details.SetArtist(data.Artist, entity.SrcMeta)
@@ -713,7 +719,7 @@ func (ind *Index) UserMediaFile(m *MediaFile, o IndexOptions, originalName, phot
 			photo.SetCameraSerial(data.CameraSerial)
 
 			// Update metadata details.
-			details.SetKeywords(data.Keywords.String(), entity.SrcMeta)
+			setKeywords(data.Keywords.String(), entity.SrcMeta)
 			details.SetNotes(data.Notes, entity.SrcMeta)
 			details.SetSubject(data.Subject, entity.SrcMeta)
 			details.SetArtist(data.Artist, entity.SrcMeta)
@@ -848,7 +854,7 @@ func (ind *Index) UserMediaFile(m *MediaFile, o IndexOptions, originalName, phot
 			photo.SetCameraSerial(data.CameraSerial)
 
 			// Update metadata details.
-			details.SetKeywords(data.Keywords.String(), entity.SrcMeta)
+			setKeywords(data.Keywords.String(), entity.SrcMeta)
 			details.SetNotes(data.Notes, entity.SrcMeta)
 			details.SetSubject(data.Subject, entity.SrcMeta)
 			details.SetArtist(data.Artist, entity.SrcMeta)
@@ -971,26 +977,26 @@ func (ind *Index) UserMediaFile(m *MediaFile, o IndexOptions, originalName, phot
 			log.Debugf("%s in %s (update title)", err, logName)
 		}
 
-		w := txt.Words(details.Keywords)
+		generatedKeywords := []string{}
 
 		if !fs.IsGenerated(fileBase) {
-			w = append(w, txt.FilenameKeywords(fileBase)...)
+			generatedKeywords = append(generatedKeywords, txt.FilenameKeywords(fileBase)...)
 		}
 
 		switch {
 		case photo.OriginalName == "":
 			// Do nothing.
 		case fs.IsGenerated(photo.OriginalName):
-			w = append(w, txt.FilenameKeywords(filepath.Dir(photo.OriginalName))...)
+			generatedKeywords = append(generatedKeywords, txt.FilenameKeywords(filepath.Dir(photo.OriginalName))...)
 		default:
-			w = append(w, txt.FilenameKeywords(photo.OriginalName)...)
+			generatedKeywords = append(generatedKeywords, txt.FilenameKeywords(photo.OriginalName)...)
 		}
 
-		w = append(w, txt.FilenameKeywords(filePath)...)
-		w = append(w, locKeywords...)
-		w = append(w, file.FileMainColor)
+		generatedKeywords = append(generatedKeywords, txt.FilenameKeywords(filePath)...)
+		generatedKeywords = append(generatedKeywords, locKeywords...)
+		generatedKeywords = append(generatedKeywords, file.FileMainColor)
 
-		details.Keywords = strings.Join(txt.UniqueWords(w), ", ")
+		rebuildDetailsKeywords(details, explicitKeywords, generatedKeywords, metadataKeywordsLoaded)
 
 		if details.Keywords != "" {
 			log.Tracef("index: %s has keywords %s", logName, details.Keywords)

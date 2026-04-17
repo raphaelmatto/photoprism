@@ -78,9 +78,10 @@ func NewSettings(theme, language, timeZone string) *Settings {
 			Dest: "",
 		},
 		Index: IndexSettings{
-			Path:    RootPath,
-			Rescan:  false,
-			Convert: true,
+			Path:          RootPath,
+			Rescan:        false,
+			Convert:       true,
+			AddAIKeywords: newBool(true),
 		},
 		Stack: StackSettings{
 			UUID: true,
@@ -117,6 +118,10 @@ func (s *Settings) Propagate() {
 
 	if s.UI.StartPage == "" {
 		s.UI.StartPage = DefaultStartPage
+	}
+
+	if s.Index.AddAIKeywords == nil {
+		s.Index.AddAIKeywords = newBool(true)
 	}
 
 	if s.Maps.Style == "" {

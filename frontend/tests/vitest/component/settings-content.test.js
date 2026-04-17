@@ -12,6 +12,7 @@ function createSettings() {
     },
     index: {
       convert: true,
+      addAIKeywords: true,
     },
     display: {
       originals: false,

@@ -121,6 +121,11 @@ func TestSavePhotoForm(t *testing.T) {
 
 func TestPhoto_LabelKeywords(t *testing.T) {
 	t.Run("CollectsSearchableKeywords", func(t *testing.T) {
+		SetAddAIKeywords(true)
+		t.Cleanup(func() {
+			SetAddAIKeywords(true)
+		})
+
 		photo := Photo{
 			Labels: []PhotoLabel{
 				{
@@ -159,8 +164,51 @@ func TestPhoto_LabelKeywords(t *testing.T) {
 		assert.ElementsMatch(t, expected, photo.LabelKeywords())
 	})
 	t.Run("NilPhoto", func(t *testing.T) {
+		SetAddAIKeywords(true)
+		t.Cleanup(func() {
+			SetAddAIKeywords(true)
+		})
+
 		var photo *Photo
 		assert.Nil(t, photo.LabelKeywords())
+	})
+	t.Run("SkipsGeneratedLabelsWhenDisabled", func(t *testing.T) {
+		SetAddAIKeywords(false)
+		t.Cleanup(func() {
+			SetAddAIKeywords(true)
+		})
+
+		photo := Photo{
+			Labels: []PhotoLabel{
+				{
+					LabelSrc:    SrcAuto,
+					Uncertainty: 0,
+					Label: &Label{
+						LabelName: "Neural Sunset",
+						LabelCategories: []*Label{
+							{LabelName: "Sky Glow"},
+						},
+					},
+				},
+				{
+					LabelSrc:    SrcManual,
+					Uncertainty: 0,
+					Label: &Label{
+						LabelName: "Favorite Trip",
+						LabelCategories: []*Label{
+							{LabelName: "Travel Memory"},
+						},
+					},
+				},
+			},
+		}
+
+		expected := append([]string{}, txt.Keywords("Favorite Trip")...)
+		expected = append(expected, txt.Keywords("Travel Memory")...)
+
+		assert.ElementsMatch(t, expected, photo.LabelKeywords())
+		assert.NotContains(t, photo.LabelKeywords(), "neural")
+		assert.NotContains(t, photo.LabelKeywords(), "sunset")
 	})
 }
 

@@ -313,18 +313,24 @@ func (data *Data) Exif(fileName string, fileFormat fs.Type, bruteForce bool) (er
 
 	if value, ok := data.exif["Flash"]; ok {
 		if i, err := strconv.Atoi(value); err == nil && i&1 == 1 {
-			data.AddKeywords(KeywordFlash)
+			if autoKeywordsEnabled() {
+				data.AddKeywords(KeywordFlash)
+			}
 			data.Flash = true
 		}
 	}
 
 	if value, ok := data.exif["ImageDescription"]; ok {
-		data.AutoAddKeywords(value)
+		if autoKeywordsEnabled() {
+			data.AutoAddKeywords(value)
+		}
 		data.Caption = SanitizeCaption(value)
 	}
 
 	if value, ok := data.exif["ProjectionType"]; ok {
-		data.AddKeywords(KeywordPanorama)
+		if autoKeywordsEnabled() {
+			data.AddKeywords(KeywordPanorama)
+		}
 		data.Projection = projection.New(SanitizeString(value)).String()
 	}
 
