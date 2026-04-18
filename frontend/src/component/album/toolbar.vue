@@ -18,6 +18,13 @@
         </router-link>
       </v-toolbar-title>
 
+      <v-btn
+        :title="$gettext('Reverse Sort')"
+        :icon="filter.reverse ? 'mdi-sort-descending' : 'mdi-sort-ascending'"
+        class="action-reverse ms-1"
+        @click.prevent="toggleReverse"
+      ></v-btn>
+
       <v-btn-toggle
         :model-value="settings.view"
         :title="$gettext('Toggle View')"
@@ -138,6 +145,9 @@ export default {
       if (this.expanded) {
         this.expanded = false;
       }
+    },
+    toggleReverse() {
+      this.updateQuery({ reverse: !this.filter.reverse });
     },
     menuActions() {
       return [

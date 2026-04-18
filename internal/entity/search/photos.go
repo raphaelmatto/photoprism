@@ -205,7 +205,7 @@ func searchPhotos(frm form.SearchPhotos, sess *entity.Session, resultCols string
 	case sortby.Size:
 		s = s.Order(OrderExpr("files.file_size DESC, files.time_index", frm.Reverse))
 	case sortby.Newest:
-		s = s.Order(OrderExpr("files.time_index", frm.Reverse))
+		s = s.Order(OrderExpr("files.time_index ASC", frm.Reverse))
 	case sortby.Oldest:
 		s = s.Order(OrderExpr("files.photo_taken_at ASC, files.media_id", frm.Reverse))
 	case sortby.Similar:
@@ -218,7 +218,7 @@ func searchPhotos(frm form.SearchPhotos, sess *entity.Session, resultCols string
 	case sortby.Random:
 		s = s.Order(sortby.RandomExpr(s.Dialect()))
 	case sortby.Default, sortby.Imported, sortby.Added:
-		s = s.Order(OrderExpr("files.media_id", frm.Reverse))
+		s = s.Order(OrderExpr("files.media_id ASC", frm.Reverse))
 	default:
 		return PhotoResults{}, 0, ErrBadSortOrder
 	}

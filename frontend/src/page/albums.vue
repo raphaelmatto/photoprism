@@ -36,6 +36,13 @@
         ></v-text-field>
 
         <v-btn
+          :title="$gettext('Reverse Sort')"
+          :icon="filter.reverse ? 'mdi-sort-descending' : 'mdi-sort-ascending'"
+          class="action-reverse ms-1"
+          @click.prevent="toggleReverse"
+        ></v-btn>
+
+        <v-btn
           v-if="canManage && staticFilter.type === 'album'"
           :title="$gettext('Add Album')"
           icon="mdi-plus"
@@ -284,6 +291,7 @@ import RestModel from "model/rest";
 import { MaxItems } from "common/clipboard";
 import $notify from "common/notify";
 import { Input, InputInvalid, ClickShort, ClickLong } from "common/input";
+import { fromWireOrder, toWireOrder } from "common/sort";
 import * as options from "options/options";
 import * as contexts from "options/contexts";
 
@@ -304,6 +312,10 @@ export default {
     defaultOrder: {
       type: String,
       default: "name",
+    },
+    defaultReverse: {
+      type: Boolean,
+      default: false,
     },
     view: {
       type: String,
@@ -387,10 +399,9 @@ export default {
           { value: "favorites", text: this.$gettext("Favorites") },
           { value: "name", text: this.$gettext("Name") },
           { value: "place", text: this.$gettext("Location") },
-          { value: "newest", text: this.$gettext("Newest First") },
-          { value: "oldest", text: this.$gettext("Oldest First") },
-          { value: "added", text: this.$gettext("Recently Added") },
-          { value: "edited", text: this.$gettext("Recently Edited") },
+          { value: "date", text: this.$gettext("Date") },
+          { value: "added", text: this.$gettext("Added") },
+          { value: "edited", text: this.$gettext("Edited") },
         ],
       },
     };
@@ -521,6 +532,9 @@ export default {
 
       this.expanded = !this.expanded;
     },
+    toggleReverse() {
+      this.updateQuery({ reverse: !this.filter.reverse });
+    },
     showExpansionPanel() {
       if (!this.expanded) {
         this.expanded = true;
@@ -551,23 +565,59 @@ export default {
     yearOptions() {
       return this.all.years.concat(options.IndexedYears());
     },
-    sortOrder() {
+    sortStorageKeys() {
       const typeName = this.staticFilter?.type;
-      const keyName = "albums.order." + typeName;
+      return {
+        order: "albums.order." + typeName,
+        reverse: "albums.reverse." + typeName,
+      };
+    },
+    sortOrder() {
+      const keys = this.sortStorageKeys();
       const queryParam = this.$route.query["order"];
-      const storeOrder = window.localStorage.getItem(keyName);
+      const storeOrder = window.localStorage.getItem(keys.order);
 
+      let raw;
       if (queryParam) {
-        window.localStorage.setItem(keyName, queryParam);
-        return queryParam;
+        window.localStorage.setItem(keys.order, queryParam);
+        raw = queryParam;
       } else if (storeOrder) {
-        return storeOrder;
+        raw = storeOrder;
+      } else {
+        raw = this.defaultOrder;
       }
 
-      return this.defaultOrder;
+      const migrated = fromWireOrder(raw);
+      if (migrated.order !== raw) {
+        window.localStorage.setItem(keys.order, migrated.order);
+        if (migrated.reverse !== null) {
+          window.localStorage.setItem(keys.reverse, String(migrated.reverse));
+        }
+      }
+      return migrated.order;
     },
     sortReverse() {
-      return !!this.$route?.query["reverse"] && this.$route.query["reverse"] === "true";
+      const keys = this.sortStorageKeys();
+      const queryReverse = this.$route.query["reverse"];
+
+      if (queryReverse === "true" || queryReverse === "false") {
+        const val = queryReverse === "true";
+        window.localStorage.setItem(keys.reverse, String(val));
+        return val;
+      }
+
+      const stored = window.localStorage.getItem(keys.reverse);
+      if (stored !== null) {
+        return stored === "true";
+      }
+
+      const storeOrder = window.localStorage.getItem(keys.order);
+      if (storeOrder) {
+        const migrated = fromWireOrder(storeOrder);
+        if (migrated.reverse !== null) return migrated.reverse;
+      }
+
+      return this.defaultReverse;
     },
     searchCount() {
       if (this.restoring && this.restoreTargetCount > 0) {
@@ -902,6 +952,9 @@ export default {
       };
 
       Object.assign(params, this.lastFilter);
+      if (this.lastFilter.order !== undefined) {
+        params.order = toWireOrder(this.lastFilter.order);
+      }
 
       if (this.staticFilter) {
         Object.assign(params, this.staticFilter);
@@ -1004,6 +1057,14 @@ export default {
     updateQuery(props) {
       this.updateFilter(props);
 
+      // Persist reverse because `reverse=false` is stripped from the URL as
+      // a falsy value — without this, a stored `true` would re-surface on
+      // reload after the user toggles reverse back off.
+      if (props && Object.prototype.hasOwnProperty.call(props, "reverse")) {
+        const keys = this.sortStorageKeys();
+        window.localStorage.setItem(keys.reverse, String(!!props.reverse));
+      }
+
       if (this.loading) {
         return false;
       }
@@ -1035,6 +1096,7 @@ export default {
       };
 
       Object.assign(params, this.filter);
+      params.order = toWireOrder(this.filter.order);
 
       if (this.staticFilter) {
         Object.assign(params, this.staticFilter);

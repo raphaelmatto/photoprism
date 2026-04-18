@@ -50,6 +50,13 @@
           "
         ></v-text-field>
 
+        <v-btn
+          :title="$gettext('Reverse Sort')"
+          :icon="filter.reverse ? 'mdi-sort-descending' : 'mdi-sort-ascending'"
+          class="action-reverse ms-1"
+          @click.prevent="toggleReverse"
+        ></v-btn>
+
         <v-btn-toggle
           :model-value="settings.view"
           :title="$gettext('Toggle View')"
@@ -398,10 +405,9 @@ export default {
       switch (this.context) {
         case contexts.Archive:
           return [
-            { value: "newest", text: this.$gettext("Newest First") },
-            { value: "oldest", text: this.$gettext("Oldest First") },
-            { value: "added", text: this.$gettext("Recently Added") },
-            { value: "archived", text: this.$gettext("Recently Archived") },
+            { value: "date", text: this.$gettext("Date") },
+            { value: "added", text: this.$gettext("Added") },
+            { value: "archived", text: this.$gettext("Archived") },
             { value: "title", text: this.$gettext("Picture Title") },
             { value: "name", text: this.$gettext("File Name") },
             { value: "size", text: this.$gettext("File Size") },
@@ -410,9 +416,8 @@ export default {
         case contexts.Hidden:
         case contexts.Review:
           return [
-            { value: "newest", text: this.$gettext("Newest First") },
-            { value: "oldest", text: this.$gettext("Oldest First") },
-            { value: "added", text: this.$gettext("Recently Added") },
+            { value: "date", text: this.$gettext("Date") },
+            { value: "added", text: this.$gettext("Added") },
             { value: "title", text: this.$gettext("Picture Title") },
             { value: "name", text: this.$gettext("File Name") },
             { value: "size", text: this.$gettext("File Size") },
@@ -420,16 +425,15 @@ export default {
           ];
         default:
           return [
-            { value: "newest", text: this.$gettext("Newest First") },
-            { value: "oldest", text: this.$gettext("Oldest First") },
-            { value: "added", text: this.$gettext("Recently Added") },
-            { value: "edited", text: this.$gettext("Recently Edited") },
+            { value: "date", text: this.$gettext("Date") },
+            { value: "added", text: this.$gettext("Added") },
+            { value: "edited", text: this.$gettext("Edited") },
             { value: "title", text: this.$gettext("Picture Title") },
             { value: "name", text: this.$gettext("File Name") },
             { value: "size", text: this.$gettext("File Size") },
             { value: "duration", text: this.$gettext("Video Duration") },
             { value: "similar", text: this.$gettext("Visual Similarity") },
-            { value: "relevance", text: this.$gettext("Most Relevant") },
+            { value: "relevance", text: this.$gettext("Relevance") },
           ];
       }
     },
@@ -447,6 +451,9 @@ export default {
     },
     toggleExpansionPanel() {
       this.expanded = !this.expanded;
+    },
+    toggleReverse() {
+      this.updateQuery({ reverse: !this.filter.reverse });
     },
     menuActions() {
       return [

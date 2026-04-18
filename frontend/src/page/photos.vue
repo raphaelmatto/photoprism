@@ -63,6 +63,7 @@
 
 <script>
 import { metadataViewRequiresDetails, MetadataView } from "common/metadata";
+import { fromWireOrder, toWireOrder } from "common/sort";
 import { Photo } from "model/photo";
 import Thumb from "model/thumb";
 import * as contexts from "options/contexts";
@@ -358,50 +359,77 @@ export default {
 
       return contexts.Default;
     },
+    sortStorageKeys() {
+      switch (this.getContext()) {
+        case contexts.Archive:
+          return { order: "archive.order", reverse: "archive.reverse", defaultOrder: "archived", defaultReverse: false };
+        case contexts.Favorites:
+          return { order: "favorites.order", reverse: "favorites.reverse", defaultOrder: "date", defaultReverse: false };
+        case contexts.Hidden:
+          return { order: "hidden.order", reverse: "hidden.reverse", defaultOrder: "added", defaultReverse: false };
+        case contexts.Review:
+          return { order: "review.order", reverse: "review.reverse", defaultOrder: "added", defaultReverse: false };
+        default:
+          return { order: "photos.order", reverse: "photos.reverse", defaultOrder: "date", defaultReverse: false };
+      }
+    },
     sortOrder() {
       if (this.embedded) {
         return "newest";
       }
 
-      let storageKey;
-      let defaultOrder;
+      const keys = this.sortStorageKeys();
+      const queryOrder = this.$route.query["order"];
+      const storageOrder = window.localStorage.getItem(keys.order);
 
-      switch (this.getContext()) {
-        case contexts.Archive:
-          storageKey = "archive.order";
-          defaultOrder = "archived";
-          break;
-        case contexts.Favorites:
-          storageKey = "favorites.order";
-          defaultOrder = "newest";
-          break;
-        case contexts.Hidden:
-          storageKey = "hidden.order";
-          defaultOrder = "added";
-          break;
-        case contexts.Review:
-          storageKey = "review.order";
-          defaultOrder = "added";
-          break;
-        default:
-          storageKey = "photos.order";
-          defaultOrder = "newest";
-      }
-
-      let queryOrder = this.$route.query["order"];
-      let storageOrder = window.localStorage.getItem(storageKey);
-
+      let raw;
       if (queryOrder) {
-        window.localStorage.setItem(storageKey, queryOrder);
-        return queryOrder;
+        window.localStorage.setItem(keys.order, queryOrder);
+        raw = queryOrder;
       } else if (storageOrder) {
-        return storageOrder;
+        raw = storageOrder;
+      } else {
+        raw = keys.defaultOrder;
       }
 
-      return defaultOrder;
+      // Migrate legacy "newest"/"oldest" values (from URL bookmarks or older
+      // localStorage entries) to the directionless "date" + reverse flag.
+      const migrated = fromWireOrder(raw);
+      if (migrated.order !== raw) {
+        window.localStorage.setItem(keys.order, migrated.order);
+        if (migrated.reverse !== null) {
+          window.localStorage.setItem(keys.reverse, String(migrated.reverse));
+        }
+      }
+      return migrated.order;
     },
     sortReverse() {
-      return !!this.$route?.query["reverse"] && this.$route.query["reverse"] === "true";
+      if (this.embedded) {
+        return false;
+      }
+
+      const keys = this.sortStorageKeys();
+      const queryReverse = this.$route.query["reverse"];
+
+      if (queryReverse === "true" || queryReverse === "false") {
+        const val = queryReverse === "true";
+        window.localStorage.setItem(keys.reverse, String(val));
+        return val;
+      }
+
+      const storageReverse = window.localStorage.getItem(keys.reverse);
+      if (storageReverse !== null) {
+        return storageReverse === "true";
+      }
+
+      // Fall back to the implicit direction of a legacy stored order value.
+      const storageOrder = window.localStorage.getItem(keys.order);
+      if (storageOrder) {
+        const migrated = fromWireOrder(storageOrder);
+        if (migrated.reverse !== null) return migrated.reverse;
+      }
+
+      return keys.defaultReverse;
     },
     openDate(index) {
       const photo = this.results[index];
@@ -503,6 +531,9 @@ export default {
       }
 
       Object.assign(params, this.lastFilter);
+      if (this.lastFilter.order !== undefined) {
+        params.order = toWireOrder(this.lastFilter.order);
+      }
 
       if (this.staticFilter) {
         Object.assign(params, this.staticFilter);
@@ -589,6 +620,14 @@ export default {
     updateQuery(props) {
       this.updateFilter(props);
 
+      // Persist reverse to localStorage because `reverse=false` is stripped
+      // from the URL below as a falsy value; without this, a previously
+      // stored `true` would shadow a freshly toggled-off value on reload.
+      if (!this.embedded && props && Object.prototype.hasOwnProperty.call(props, "reverse")) {
+        const keys = this.sortStorageKeys();
+        window.localStorage.setItem(keys.reverse, String(!!props.reverse));
+      }
+
       if (this.loading) {
         return false;
       }
@@ -625,6 +664,7 @@ export default {
       }
 
       Object.assign(params, this.filter);
+      params.order = toWireOrder(this.filter.order);
 
       if (this.staticFilter) {
         Object.assign(params, this.staticFilter);

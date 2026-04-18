@@ -32,6 +32,13 @@
           "
         ></v-text-field>
 
+        <v-btn
+          :title="$gettext('Reverse Sort')"
+          :icon="filter.reverse ? 'mdi-sort-descending' : 'mdi-sort-ascending'"
+          class="action-reverse ms-1"
+          @click.prevent="toggleReverse"
+        ></v-btn>
+
         <p-action-menu :items="menuActions" button-class="ms-1"></p-action-menu>
       </v-toolbar>
     </v-form>
@@ -132,6 +139,7 @@ import RestModel from "model/rest";
 import { MaxItems } from "common/clipboard";
 import $notify from "common/notify";
 import { Input, InputInvalid, ClickShort, ClickLong } from "common/input";
+import { fromWireOrder, toWireOrder } from "common/sort";
 
 import PLoading from "component/loading.vue";
 import PActionMenu from "component/action/menu.vue";
@@ -157,6 +165,7 @@ export default {
     const query = this.$route.query;
     const routeName = this.$route.name;
     const order = this.sortOrder();
+    const reverse = this.sortReverse();
     const q = query["q"] ? query["q"] : "";
     const all = query["all"] ? query["all"] : "";
     const settings = {};
@@ -185,7 +194,7 @@ export default {
       page: 0,
       selection: [],
       settings: settings,
-      filter: { q, order, all },
+      filter: { q, order, reverse, all },
       lastFilter: {},
       routeName: routeName,
       titleRule: (v) => v.length <= this.$config.get("clip") || this.$gettext("Name too long"),
@@ -222,6 +231,7 @@ export default {
       this.lastFilter = {};
       this.filter.q = query["q"] ? query["q"] : "";
       this.filter.order = this.sortOrder();
+      this.filter.reverse = this.sortReverse();
       this.filter.all = query["all"] ? query["all"] : "";
 
       this.initRestoreState();
@@ -361,21 +371,51 @@ export default {
       this.dialog.edit = true;
     },
     sortOrder() {
-      const keyName = "labels.order";
+      const keys = { order: "labels.order", reverse: "labels.reverse" };
       const queryParam = this.$route.query["order"];
-      const storedOrder = window.localStorage.getItem(keyName);
+      const storedOrder = window.localStorage.getItem(keys.order);
 
+      let raw;
       if (queryParam) {
-        window.localStorage.setItem(keyName, queryParam);
-        return queryParam;
+        window.localStorage.setItem(keys.order, queryParam);
+        raw = queryParam;
       } else if (storedOrder) {
-        return storedOrder;
+        raw = storedOrder;
+      } else {
+        raw = this.defaultOrder;
       }
 
-      return this.defaultOrder;
+      const migrated = fromWireOrder(raw);
+      if (migrated.order !== raw) {
+        window.localStorage.setItem(keys.order, migrated.order);
+        if (migrated.reverse !== null) {
+          window.localStorage.setItem(keys.reverse, String(migrated.reverse));
+        }
+      }
+      return migrated.order;
     },
     sortReverse() {
-      return !!this.$route?.query["reverse"] && this.$route.query["reverse"] === "true";
+      const queryReverse = this.$route.query["reverse"];
+
+      if (queryReverse === "true" || queryReverse === "false") {
+        const val = queryReverse === "true";
+        window.localStorage.setItem("labels.reverse", String(val));
+        return val;
+      }
+
+      const stored = window.localStorage.getItem("labels.reverse");
+      if (stored !== null) return stored === "true";
+
+      const storedOrder = window.localStorage.getItem("labels.order");
+      if (storedOrder) {
+        const migrated = fromWireOrder(storedOrder);
+        if (migrated.reverse !== null) return migrated.reverse;
+      }
+
+      return false;
+    },
+    toggleReverse() {
+      this.updateQuery({ reverse: !this.filter.reverse });
     },
     searchCount() {
       if (this.restoring && this.restoreTargetCount > 0) {
@@ -715,6 +755,9 @@ export default {
       };
 
       Object.assign(params, this.lastFilter);
+      if (this.lastFilter.order !== undefined) {
+        params.order = toWireOrder(this.lastFilter.order);
+      }
 
       if (this.staticFilter) {
         Object.assign(params, this.staticFilter);
@@ -817,6 +860,10 @@ export default {
     updateQuery(props) {
       this.updateFilter(props);
 
+      if (props && Object.prototype.hasOwnProperty.call(props, "reverse")) {
+        window.localStorage.setItem("labels.reverse", String(!!props.reverse));
+      }
+
       if (this.loading) {
         return false;
       }
@@ -848,6 +895,7 @@ export default {
       };
 
       Object.assign(params, this.filter);
+      params.order = toWireOrder(this.filter.order);
 
       if (this.staticFilter) {
         Object.assign(params, this.staticFilter);

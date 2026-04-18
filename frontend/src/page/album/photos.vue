@@ -62,6 +62,7 @@
 
 <script>
 import { metadataViewRequiresDetails, MetadataView } from "common/metadata";
+import { fromWireOrder, toWireOrder } from "common/sort";
 import { Photo } from "model/photo";
 import Album from "model/album";
 import Thumb from "model/thumb";
@@ -100,7 +101,8 @@ export default {
     const q = query["q"] ? query["q"] : "";
     const country = query["country"] ? query["country"] : "";
     const view = this.getViewType();
-    const filter = { country: country, camera: camera, q: q };
+    const reverse = this.sortReverse();
+    const filter = { country: country, camera: camera, q: q, reverse: reverse };
     const settings = { view: view };
     const batchSize = Photo.batchSize();
 
@@ -159,6 +161,7 @@ export default {
       this.filter.q = query["q"] ? query["q"] : "";
       this.filter.camera = query["camera"] ? parseInt(query["camera"]) : 0;
       this.filter.country = query["country"] ? query["country"] : "";
+      this.filter.reverse = this.sortReverse();
       this.settings.view = this.getViewType();
 
       /**
@@ -267,10 +270,33 @@ export default {
     },
     sortOrder() {
       const query = this.$route.query;
-      return query["order"] ? query["order"] : this.model?.Order;
+      const raw = query["order"] ? query["order"] : this.model?.Order;
+      if (!raw) return raw;
+      return fromWireOrder(raw).order;
     },
     sortReverse() {
-      return !!this.$route?.query["reverse"] && this.$route.query["reverse"] === "true";
+      const queryReverse = this.$route?.query["reverse"];
+
+      if (queryReverse === "true" || queryReverse === "false") {
+        const val = queryReverse === "true";
+        window.localStorage.setItem("album.reverse", String(val));
+        return val;
+      }
+
+      const stored = window.localStorage.getItem("album.reverse");
+      if (stored !== null) return stored === "true";
+
+      // A URL `order=oldest` carries an implicit reverse; honor it.
+      const rawOrder = this.$route?.query["order"];
+      if (rawOrder) {
+        const migrated = fromWireOrder(rawOrder);
+        if (migrated.reverse !== null) return migrated.reverse;
+      }
+
+      return false;
+    },
+    toggleReverse() {
+      this.updateQuery({ reverse: !this.filter.reverse });
     },
     openDate(index) {
       if (!this.canEdit) {
@@ -359,7 +385,7 @@ export default {
         offset: offset,
         s: this.uid,
         merged: true,
-        order: this.sortOrder(),
+        order: toWireOrder(this.sortOrder()),
         reverse: this.sortReverse(),
       };
 
@@ -455,6 +481,10 @@ export default {
     updateQuery(props) {
       this.updateFilter(props);
 
+      if (props && Object.prototype.hasOwnProperty.call(props, "reverse")) {
+        window.localStorage.setItem("album.reverse", String(!!props.reverse));
+      }
+
       if (this.loading) {
         return false;
       }
@@ -485,7 +515,7 @@ export default {
         offset: this.offset,
         s: this.uid,
         merged: true,
-        order: this.sortOrder(),
+        order: toWireOrder(this.sortOrder()),
         reverse: this.sortReverse(),
       };
 
