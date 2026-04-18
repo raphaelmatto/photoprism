@@ -290,7 +290,6 @@
 .cards-view.packed-view .result .packed-preview {
     background-size: cover;
     background-position: center center;
-    aspect-ratio: auto;
 }
 
 .packed-view .packed-card {
