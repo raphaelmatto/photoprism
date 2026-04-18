@@ -422,7 +422,7 @@ export default {
     },
     packedPreviewStyle(photo, width, height) {
       const settings = this.$config.getSettings();
-      const thumbSize = choosePackedThumbSize(width, height, settings.display?.retinaThumbnails, serverMaxFitSize(settings));
+      const thumbSize = choosePackedThumbSize(width, height, settings.display?.retinaThumbnails, serverMaxFitSize(this.$config.values?.thumbs));
 
       return {
         width: `${width}px`,

@@ -137,7 +137,7 @@
 </template>
 
 <script>
-import { choosePackedThumbSize, layoutPackedRows } from "common/packed";
+import { choosePackedThumbSize, layoutPackedRows, serverMaxFitSize } from "common/packed";
 import RestModel from "model/rest";
 import { Folder } from "model/folder";
 import $notify from "common/notify";
@@ -277,7 +277,12 @@ export default {
       });
     },
     packedPreviewStyle(model, width, height) {
-      const thumbSize = choosePackedThumbSize(width, height, this.$config.getSettings().display?.retinaThumbnails);
+      const thumbSize = choosePackedThumbSize(
+        width,
+        height,
+        this.$config.getSettings().display?.retinaThumbnails,
+        serverMaxFitSize(this.$config.values?.thumbs)
+      );
 
       return {
         width: `${width}px`,

@@ -72,15 +72,24 @@ export function choosePackedThumbSize(width, height, retinaThumbnails, maxServer
   return "fit_7680";
 }
 
-// serverMaxFitSize returns the largest fit_* pixel size the server will generate,
-// based on the Static / Dynamic Size Limit settings.
-export function serverMaxFitSize(settings) {
-  const staticLimit = Number.parseInt(settings?.ThumbSize, 10) || 0;
-  const dynamicLimit = Number.parseInt(settings?.ThumbSizeUncached, 10) || 0;
-  if (settings?.ThumbUncached && dynamicLimit > 0) {
-    return Math.max(staticLimit, dynamicLimit);
+// serverMaxFitSize returns the largest fit_* pixel size the server advertises
+// via the config.thumbs list. Returns 0 when the list is empty or missing,
+// which disables the cap in choosePackedThumbSize.
+export function serverMaxFitSize(thumbs) {
+  if (!Array.isArray(thumbs) || thumbs.length === 0) {
+    return 0;
   }
-  return staticLimit;
+  let max = 0;
+  for (const t of thumbs) {
+    if (typeof t?.size !== "string" || !t.size.startsWith("fit_")) {
+      continue;
+    }
+    const w = Number.parseInt(t?.w, 10) || 0;
+    if (w > max) {
+      max = w;
+    }
+  }
+  return max;
 }
 
 function buildRow(row, aspectRatioSum, containerWidth, gutter, maxHeight = 0) {

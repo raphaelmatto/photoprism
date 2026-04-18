@@ -200,7 +200,7 @@
   </div>
 </template>
 <script>
-import { choosePackedThumbSize, layoutPackedRows } from "common/packed";
+import { choosePackedThumbSize, layoutPackedRows, serverMaxFitSize } from "common/packed";
 import { Input, InputInvalid, ClickShort, ClickLong } from "common/input";
 import { virtualizationTools } from "common/virtualization-tools";
 import IconLivePhoto from "component/icon/live-photo.vue";
@@ -338,7 +338,12 @@ export default {
       });
     },
     packedPreviewStyle(photo, width, height) {
-      const thumbSize = choosePackedThumbSize(width, height, this.$config.getSettings().display?.retinaThumbnails);
+      const thumbSize = choosePackedThumbSize(
+        width,
+        height,
+        this.$config.getSettings().display?.retinaThumbnails,
+        serverMaxFitSize(this.$config.values?.thumbs)
+      );
 
       return {
         width: `${width}px`,

@@ -255,7 +255,7 @@ export default {
       }
 
       const settings = this.$config.getSettings();
-      const thumbSize = choosePackedThumbSize(50, 50, settings.display?.retinaThumbnails, serverMaxFitSize(settings));
+      const thumbSize = choosePackedThumbSize(50, 50, settings.display?.retinaThumbnails, serverMaxFitSize(this.$config.values?.thumbs));
 
       return {
         backgroundImage: `url(${photo.thumbnailUrl(thumbSize)})`,
