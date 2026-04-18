@@ -19,6 +19,10 @@ func (c *Config) DisableFrontend() bool {
 
 // DisableSettings checks if users should not be allowed to change settings.
 func (c *Config) DisableSettings() bool {
+	if c.Public() {
+		return true
+	}
+
 	return c.options.DisableSettings
 }
 

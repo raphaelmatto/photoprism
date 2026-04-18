@@ -15,7 +15,18 @@ func TestConfig_DisableFrontend(t *testing.T) {
 
 func TestConfig_DisableSettings(t *testing.T) {
 	c := NewConfig(CliTestContext())
+
+	c.options.Public = false
+	c.options.DisableSettings = false
 	assert.False(t, c.DisableSettings())
+
+	c.options.Public = true
+	c.options.DisableSettings = false
+	assert.True(t, c.DisableSettings())
+
+	c.options.Public = false
+	c.options.DisableSettings = true
+	assert.True(t, c.DisableSettings())
 }
 
 func TestConfig_DisableWebDAV(t *testing.T) {
