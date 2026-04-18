@@ -565,7 +565,7 @@ export default {
       formData: null,
       previousFormData: {},
       deletedFields: {},
-      toggleFieldsArray: ["Scan", "Favorite", "Private", "Panorama"],
+      toggleFieldsArray: ["Scan", "Favorite", "Private", "Panorama"].filter((f) => f !== "Favorite" || this.$config.feature("favorites")),
       actions: { none: "none", update: "update", add: "add", remove: "remove" },
       locationDialog: false,
       placesDisabled: !this.$config.feature("places"),

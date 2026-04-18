@@ -97,7 +97,7 @@
                       <div class="v-btn v-btn--icon v-btn--small" />
                     </template>
 
-                    <template v-else>
+                    <template v-else-if="$config.feature('favorites')">
                       <v-btn icon density="comfortable" variant="text" :ripple="false" class="input-favorite" @click.stop.prevent="m.toggleLike()">
                         <v-icon v-if="m.Favorite" icon="mdi-star" color="favorite" class="favorite-on"></v-icon>
                         <v-icon v-else icon="mdi-star-outline" color="surface" class="favorite-off"></v-icon>

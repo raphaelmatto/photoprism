@@ -153,7 +153,7 @@
                 ></v-switch>
               </td>
             </tr>
-            <tr>
+            <tr v-if="$config.feature('favorites')">
               <td>
                 {{ $gettext(`Favorite`) }}
               </td>

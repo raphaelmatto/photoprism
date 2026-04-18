@@ -91,7 +91,7 @@
             </button>
 
             <button
-              v-if="!isSharedView"
+              v-if="!isSharedView && $config.feature('favorites')"
               class="input-favorite"
               @touchstart.stop="input.touchStart($event, rowItem.index)"
               @touchend.stop="toggleLike($event, rowItem.index)"
@@ -200,7 +200,7 @@
             </button>
 
             <button
-              v-if="!isSharedView"
+              v-if="!isSharedView && $config.feature('favorites')"
               class="input-favorite"
               @touchstart.stop="input.touchStart($event, index)"
               @touchend.stop="toggleLike($event, index)"

@@ -30,7 +30,7 @@
                 class="input-title"
               ></v-text-field>
             </v-col>
-            <v-col sm="4">
+            <v-col v-if="$config.feature('favorites')" sm="4">
               <v-checkbox v-model="model.Favorite" :disabled="disabled" :label="$gettext('Favorite')" density="comfortable" hide-details> </v-checkbox>
             </v-col>
             <v-col sm="4">

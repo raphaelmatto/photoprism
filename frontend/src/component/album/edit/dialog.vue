@@ -72,7 +72,7 @@
                 item-title="text"
               ></v-select>
             </v-col>
-            <v-col sm="3">
+            <v-col v-if="$config.feature('favorites')" sm="3">
               <v-checkbox v-model="model.Favorite" :disabled="disabled" :label="$gettext('Favorite')" density="comfortable" hide-details></v-checkbox>
             </v-col>
             <v-col v-if="experimental && featPrivate" sm="3">
