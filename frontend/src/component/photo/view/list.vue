@@ -115,7 +115,7 @@
 </template>
 <script>
 import download from "common/download";
-import { choosePackedThumbSize } from "common/packed";
+import { choosePackedThumbSize, serverMaxFitSize } from "common/packed";
 import { metadataLabel, metadataLayout, metadataText, MetadataView } from "common/metadata";
 import $notify from "common/notify";
 import { PhotoClipboard } from "common/clipboard";
@@ -254,7 +254,8 @@ export default {
         return `background-image: url(${photo.thumbnailUrl(this.tileSize)})`;
       }
 
-      const thumbSize = choosePackedThumbSize(50, 50, this.$config.getSettings().display?.retinaThumbnails);
+      const settings = this.$config.getSettings();
+      const thumbSize = choosePackedThumbSize(50, 50, settings.display?.retinaThumbnails, serverMaxFitSize(settings));
 
       return {
         backgroundImage: `url(${photo.thumbnailUrl(thumbSize)})`,

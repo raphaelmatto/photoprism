@@ -257,7 +257,7 @@
   </div>
 </template>
 <script>
-import { choosePackedThumbSize, layoutPackedRows } from "common/packed";
+import { choosePackedThumbSize, layoutPackedRows, serverMaxFitSize } from "common/packed";
 import download from "common/download";
 import { hasMetadataText, metadataIcon, metadataLabel, metadataLayout, metadataText, MetadataView } from "common/metadata";
 import $notify from "common/notify";
@@ -421,7 +421,8 @@ export default {
       return Math.floor(container.clientWidth - paddingStart - paddingEnd);
     },
     packedPreviewStyle(photo, width, height) {
-      const thumbSize = choosePackedThumbSize(width, height, this.$config.getSettings().display?.retinaThumbnails);
+      const settings = this.$config.getSettings();
+      const thumbSize = choosePackedThumbSize(width, height, settings.display?.retinaThumbnails, serverMaxFitSize(settings));
 
       return {
         width: `${width}px`,

@@ -52,17 +52,35 @@ export function layoutPackedRows(items, containerWidth, options = {}) {
 }
 
 // choosePackedThumbSize returns the smallest fit thumbnail that should remain sharp at the rendered size.
-export function choosePackedThumbSize(width, height, retinaThumbnails) {
+// maxServerSize caps the request to what the server will actually serve as a fit_* thumbnail;
+// larger sizes fall back to the previous candidate so the server never substitutes a tile_* crop.
+export function choosePackedThumbSize(width, height, retinaThumbnails, maxServerSize = 0) {
   const devicePixelRatio = retinaThumbnails ? Math.max(window.devicePixelRatio || 1, 1) : 1;
   const targetSize = Math.ceil(Math.max(width, height) * devicePixelRatio);
 
+  let fallback = PackedThumbSizes[0].size;
   for (const candidate of PackedThumbSizes) {
+    if (maxServerSize > 0 && candidate.max > maxServerSize) {
+      return fallback;
+    }
     if (candidate.max >= targetSize) {
       return candidate.size;
     }
+    fallback = candidate.size;
   }
 
   return "fit_7680";
+}
+
+// serverMaxFitSize returns the largest fit_* pixel size the server will generate,
+// based on the Static / Dynamic Size Limit settings.
+export function serverMaxFitSize(settings) {
+  const staticLimit = Number.parseInt(settings?.ThumbSize, 10) || 0;
+  const dynamicLimit = Number.parseInt(settings?.ThumbSizeUncached, 10) || 0;
+  if (settings?.ThumbUncached && dynamicLimit > 0) {
+    return Math.max(staticLimit, dynamicLimit);
+  }
+  return staticLimit;
 }
 
 function buildRow(row, aspectRatioSum, containerWidth, gutter, maxHeight = 0) {
