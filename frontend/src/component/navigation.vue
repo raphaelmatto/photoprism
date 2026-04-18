@@ -600,24 +600,6 @@
               </v-list-item-title>
             </v-list-item>
 
-            <v-list-item v-if="isMini && featMembership" :to="{ name: 'upgrade' }" variant="text" class="nav-upgrade" @click.stop="">
-              <v-icon v-if="isPro" class="ma-auto">mdi-check-decagram</v-icon>
-              <v-icon v-else class="ma-auto">mdi-diamond</v-icon>
-            </v-list-item>
-            <v-list-item v-if="!isMini && featMembership" :to="{ name: 'upgrade' }" variant="text" class="nav-upgrade" @click.stop="">
-              <v-list-item-title v-if="isPro" class="nav-menu-item">
-                <v-icon>mdi-check-decagram</v-icon>
-                <p class="nav-item-title">
-                  {{ $gettext(`Upgrade`) }}
-                </p>
-              </v-list-item-title>
-              <v-list-item-title v-else class="nav-menu-item">
-                <v-icon>mdi-diamond</v-icon>
-                <p class="nav-item-title">
-                  {{ $gettext(`Support Our Mission`) }}
-                </p>
-              </v-list-item-title>
-            </v-list-item>
           </v-list>
 
           <div v-if="disconnected" class="nav-info connection-info clickable" @click.stop="showServerConnectionHelp">
