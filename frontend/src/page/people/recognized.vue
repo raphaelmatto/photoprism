@@ -106,6 +106,7 @@
               </v-btn>
 
               <v-btn
+                v-if="$config.feature('favorites')"
                 :ripple="false"
                 icon
                 variant="text"

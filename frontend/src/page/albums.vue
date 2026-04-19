@@ -204,6 +204,7 @@
                 <i class="mdi mdi-circle-outline select-off" />
               </button>
               <button
+                v-if="$config.feature('favorites')"
                 class="input-favorite"
                 @touchstart.stop="input.touchStart($event, index)"
                 @touchend.stop="toggleLike($event, index)"
