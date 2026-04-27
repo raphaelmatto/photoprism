@@ -69,7 +69,10 @@
           group
           class="ms-1"
         >
-          <v-btn value="cards" icon="mdi-view-column" class="ps-1 action-view-cards" @click="setView('cards')"></v-btn>
+          <v-btn value="scroll" :icon="true" class="ps-1 action-view-scroll" @click="setView('scroll')">
+            <v-icon size="18">mdi-view-agenda</v-icon>
+          </v-btn>
+          <v-btn value="cards" icon="mdi-view-column" class="action-view-cards" @click="setView('cards')"></v-btn>
           <v-btn v-if="listView" value="list" icon="mdi-view-list" class="action-view-list" @click="setView('list')"></v-btn>
           <v-btn value="mosaic" icon="mdi-view-comfy" class="pe-1 action-view-mosaic" @click="setView('mosaic')"></v-btn>
         </v-btn-toggle>
@@ -393,11 +396,13 @@ export default {
           { value: "mosaic", text: this.$gettext("Mosaic") },
           { value: "cards", text: this.$gettext("Cards") },
           { value: "list", text: this.$gettext("List") },
+          { value: "scroll", text: this.$gettext("Scroll") },
         ];
       } else {
         return [
           { value: "mosaic", text: this.$gettext("Mosaic") },
           { value: "cards", text: this.$gettext("Cards") },
+          { value: "scroll", text: this.$gettext("Scroll") },
         ];
       }
     },

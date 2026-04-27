@@ -45,6 +45,18 @@
         :open-location="openLocation"
         :is-shared-view="isShared"
       ></p-photo-view-list>
+      <p-photo-view-column
+        v-else-if="settings.view === 'scroll'"
+        :context="context"
+        :photos="results"
+        :select-mode="selectMode"
+        :filter="filter"
+        :open-photo="openPhoto"
+        :edit-photo="editPhoto"
+        :open-date="openDate"
+        :open-location="openLocation"
+        :is-shared-view="isShared"
+      ></p-photo-view-column>
       <p-photo-view-cards
         v-else
         :context="context"
@@ -72,6 +84,7 @@ import PPhotoClipboard from "component/photo/clipboard.vue";
 import PPhotoViewCards from "component/photo/view/cards.vue";
 import PPhotoViewMosaic from "component/photo/view/mosaic.vue";
 import PPhotoViewList from "component/photo/view/list.vue";
+import PPhotoViewColumn from "component/photo/view/column.vue";
 import PLoading from "component/loading.vue";
 import PScroll from "component/scroll.vue";
 
@@ -83,6 +96,7 @@ export default {
     PPhotoViewCards,
     PPhotoViewMosaic,
     PPhotoViewList,
+    PPhotoViewColumn,
     PLoading,
     PScroll,
   },
@@ -184,6 +198,9 @@ export default {
     context: function () {
       return this.getContext();
     },
+    activeBatchSize: function () {
+      return this.settings.view === "scroll" ? 10 : this.batchSize;
+    },
   },
   watch: {
     $route() {
@@ -251,12 +268,12 @@ export default {
     this.subscriptions.push(this.$event.subscribe("photos", (ev, data) => this.onUpdate(ev, data)));
 
     this.subscriptions.push(
-      this.$event.subscribe("lightbox.opened", (ev, data) => {
+      this.$event.subscribe("lightbox.opened", () => {
         this.lightbox.open = true;
       })
     );
     this.subscriptions.push(
-      this.$event.subscribe("lightbox.closed", (ev, data) => {
+      this.$event.subscribe("lightbox.closed", () => {
         this.lightbox.open = false;
       })
     );
@@ -279,7 +296,6 @@ export default {
     searchNeedsDetails() {
       const settings = this.$config.getSettings();
       const browseView = this.settings.view === "list" ? MetadataView.List : MetadataView.Cards;
-
       return metadataViewRequiresDetails(settings, browseView) || metadataViewRequiresDetails(settings, MetadataView.Lightbox);
     },
     onShortCut(ev) {
@@ -313,11 +329,12 @@ export default {
       return this.$refs?.toolbar?.hideExpansionPanel();
     },
     searchCount() {
+      const batchSize = this.activeBatchSize;
       const offset = parseInt(window.localStorage.getItem("photos.offset"));
       if (this.offset > 0 || !offset) {
-        return this.batchSize;
+        return batchSize;
       }
-      return offset + this.batchSize;
+      return offset + batchSize;
     },
     setOffset(offset) {
       this.offset = offset;
@@ -517,7 +534,7 @@ export default {
         this.lightbox.dirty = true;
       }
 
-      const count = this.dirty ? (this.page + 2) * this.batchSize : this.batchSize;
+      const count = this.dirty ? (this.page + 2) * this.activeBatchSize : this.activeBatchSize;
       const offset = this.dirty ? 0 : this.offset;
 
       const params = {

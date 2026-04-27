@@ -30,6 +30,18 @@
         :open-photo="openPhoto"
         :is-shared-view="isShared"
       ></p-photo-view-mosaic>
+      <p-photo-view-column
+        v-else-if="settings.view === 'scroll'"
+        :context="contexts.Album"
+        :photos="results"
+        :select-mode="selectMode"
+        :filter="filter"
+        :open-photo="openPhoto"
+        :edit-photo="editPhoto"
+        :open-date="openDate"
+        :open-location="openLocation"
+        :is-shared-view="isShared"
+      ></p-photo-view-column>
       <p-photo-view-list
         v-else-if="settings.view === 'list'"
         :context="contexts.Album"
@@ -72,6 +84,7 @@ import PPhotoClipboard from "component/photo/clipboard.vue";
 import PPhotoViewCards from "component/photo/view/cards.vue";
 import PPhotoViewMosaic from "component/photo/view/mosaic.vue";
 import PPhotoViewList from "component/photo/view/list.vue";
+import PPhotoViewColumn from "component/photo/view/column.vue";
 import PScroll from "component/scroll.vue";
 import PLoading from "component/loading.vue";
 
@@ -84,6 +97,7 @@ export default {
     PPhotoViewCards,
     PPhotoViewMosaic,
     PPhotoViewList,
+    PPhotoViewColumn,
     PScroll,
   },
   props: {
@@ -147,6 +161,9 @@ export default {
     selectMode: function () {
       return this.selection.length > 0;
     },
+    activeBatchSize: function () {
+      return this.settings.view === "scroll" ? 10 : this.batchSize;
+    },
   },
   watch: {
     $route() {
@@ -201,12 +218,12 @@ export default {
     this.subscriptions.push(this.$event.subscribe("photos", (ev, data) => this.onUpdate(ev, data)));
 
     this.subscriptions.push(
-      this.$event.subscribe("lightbox.opened", (ev, data) => {
+      this.$event.subscribe("lightbox.opened", () => {
         this.lightbox.open = true;
       })
     );
     this.subscriptions.push(
-      this.$event.subscribe("lightbox.closed", (ev, data) => {
+      this.$event.subscribe("lightbox.closed", () => {
         this.lightbox.open = false;
       })
     );
@@ -377,7 +394,7 @@ export default {
         this.lightbox.dirty = true;
       }
 
-      const count = this.dirty ? (this.page + 2) * this.batchSize : this.batchSize;
+      const count = this.dirty ? (this.page + 2) * this.activeBatchSize : this.activeBatchSize;
       const offset = this.dirty ? 0 : this.offset;
 
       const params = {
@@ -511,7 +528,7 @@ export default {
     },
     searchParams() {
       const params = {
-        count: this.batchSize,
+        count: this.activeBatchSize,
         offset: this.offset,
         s: this.uid,
         merged: true,

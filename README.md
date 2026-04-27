@@ -89,6 +89,26 @@ UPSTREAM_PR_EXTRA_PATTERN='name-one|name-two|town-name' \
 
 If the script fails, either move the fork-only change back to `production` or replace the fixture/text with a generic placeholder before pushing the PR branch.
 
+## Dev workflow
+
+To start the containers:
+docker compose up -d photoprism mariadb traefik dummy-webdav dummy-oidc
+
+To log into the photoprism container:
+docker exec -it photoprism-photoprism-1 /bin/bash
+
+To start photoprism, once logged in:
+./photoprism start
+
+To view:
+http://localhost:2342/
+
+After changes run:
+make build-js
+
+... or try this for a hot-reload:
+make watch-js
+
 ## How to Deploy
 
 ### Server Setup (one-time)
@@ -198,15 +218,5 @@ Frontend hot reload: `make watch-js` (in a separate terminal inside the containe
 
 Go changes require `make build-go` and restarting PhotoPrism.
 
-## Upstream Contributions
-
-- **PR [#5442](https://github.com/photoprism/photoprism/pull/5442)** — Display settings (Original Images, Retina Lightbox, Retina Thumbnails)
-- **Issue [#5444](https://github.com/photoprism/photoprism/issues/5444)** — ARM64 TensorFlow header bug in base image
-
 ### TODO
 - [ ] Validate retina thumbnails in: Labels, photo preview, edit details, edit labels, edit files, batch edit, account avatar
-
-### Future Ideas (not yet implemented)
-- Configurable lightbox background color (e.g. `#303030` instead of black)
-- Configurable metadata templates
-- Non-square image packing in grid views

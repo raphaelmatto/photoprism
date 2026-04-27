@@ -9,34 +9,86 @@ export const MetadataView = {
   Cards: "cards",
   List: "list",
   Lightbox: "lightbox",
+  Scroll: "scroll",
 };
 
 export const defaultMetadataLayouts = {
   [MetadataView.Cards]: ["caption", "date", "keywords"],
   [MetadataView.List]: ["filename", "date", "camera", "lens", "exposure"],
   [MetadataView.Lightbox]: ["date", "caption", "keywords", "camera", "lens", "exposure", "filename", "fileInfo"],
+  [MetadataView.Scroll]: ["date", "caption", "keywords", "camera", "lens", "exposure", "filename", "fileInfo"],
 };
 
 const detailsBackedFields = new Set(["keywords"]);
 
 const metadataFields = [
-  { id: "title", icon: "mdi-format-title", label: () => $gettext("Title"), views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox] },
-  { id: "caption", icon: "mdi-text", label: () => $gettext("Caption"), views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox] },
-  { id: "keywords", icon: "mdi-tag-multiple", label: () => $gettext("Keywords"), views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox] },
-  { id: "date", icon: "mdi-calendar-range", label: () => $gettext("Taken"), views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox] },
-  { id: "filename", icon: "mdi-film", label: () => $gettext("File Name"), views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox] },
-  { id: "camera", icon: "mdi-camera", label: () => $gettext("Camera"), views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox] },
-  { id: "lens", icon: "mdi-camera-iris", label: () => $gettext("Lens"), views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox] },
-  { id: "exposure", icon: "mdi-tune-variant", label: () => $gettext("Exposure"), views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox] },
-  { id: "fileInfo", icon: "mdi-image", label: () => $gettext("Image"), views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox] },
-  { id: "location", icon: "mdi-map-marker", label: () => $gettext("Location"), views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox] },
-  { id: "artist", icon: "mdi-account", label: () => $gettext("Artist"), views: [MetadataView.Lightbox] },
-  { id: "copyright", icon: "mdi-copyright", label: () => $gettext("Copyright"), views: [MetadataView.Lightbox] },
-  { id: "license", icon: "mdi-scale-balance", label: () => $gettext("License"), views: [MetadataView.Lightbox] },
-  { id: "software", icon: "mdi-application-cog", label: () => $gettext("Software"), views: [MetadataView.Lightbox] },
-  { id: "notes", icon: "mdi-note-text", label: () => $gettext("Notes"), views: [MetadataView.Lightbox] },
-  { id: "subject", icon: "mdi-shape", label: () => $gettext("Subject"), views: [MetadataView.Lightbox] },
-  { id: "labels", icon: "mdi-label-multiple", label: () => $gettext("Labels"), views: [MetadataView.Lightbox] },
+  {
+    id: "title",
+    icon: "mdi-format-title",
+    label: () => $gettext("Title"),
+    views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox, MetadataView.Scroll],
+  },
+  {
+    id: "caption",
+    icon: "mdi-text",
+    label: () => $gettext("Caption"),
+    views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox, MetadataView.Scroll],
+  },
+  {
+    id: "keywords",
+    icon: "mdi-tag-multiple",
+    label: () => $gettext("Keywords"),
+    views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox, MetadataView.Scroll],
+  },
+  {
+    id: "date",
+    icon: "mdi-calendar-range",
+    label: () => $gettext("Taken"),
+    views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox, MetadataView.Scroll],
+  },
+  {
+    id: "filename",
+    icon: "mdi-film",
+    label: () => $gettext("File Name"),
+    views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox, MetadataView.Scroll],
+  },
+  {
+    id: "camera",
+    icon: "mdi-camera",
+    label: () => $gettext("Camera"),
+    views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox, MetadataView.Scroll],
+  },
+  {
+    id: "lens",
+    icon: "mdi-camera-iris",
+    label: () => $gettext("Lens"),
+    views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox, MetadataView.Scroll],
+  },
+  {
+    id: "exposure",
+    icon: "mdi-tune-variant",
+    label: () => $gettext("Exposure"),
+    views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox, MetadataView.Scroll],
+  },
+  {
+    id: "fileInfo",
+    icon: "mdi-image",
+    label: () => $gettext("Image"),
+    views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox, MetadataView.Scroll],
+  },
+  {
+    id: "location",
+    icon: "mdi-map-marker",
+    label: () => $gettext("Location"),
+    views: [MetadataView.Cards, MetadataView.List, MetadataView.Lightbox, MetadataView.Scroll],
+  },
+  { id: "artist", icon: "mdi-account", label: () => $gettext("Artist"), views: [MetadataView.Lightbox, MetadataView.Scroll] },
+  { id: "copyright", icon: "mdi-copyright", label: () => $gettext("Copyright"), views: [MetadataView.Lightbox, MetadataView.Scroll] },
+  { id: "license", icon: "mdi-scale-balance", label: () => $gettext("License"), views: [MetadataView.Lightbox, MetadataView.Scroll] },
+  { id: "software", icon: "mdi-application-cog", label: () => $gettext("Software"), views: [MetadataView.Lightbox, MetadataView.Scroll] },
+  { id: "notes", icon: "mdi-note-text", label: () => $gettext("Notes"), views: [MetadataView.Lightbox, MetadataView.Scroll] },
+  { id: "subject", icon: "mdi-shape", label: () => $gettext("Subject"), views: [MetadataView.Lightbox, MetadataView.Scroll] },
+  { id: "labels", icon: "mdi-label-multiple", label: () => $gettext("Labels"), views: [MetadataView.Lightbox, MetadataView.Scroll] },
 ];
 
 // metadataFieldOptions returns the selectable metadata fields for a view.
