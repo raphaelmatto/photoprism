@@ -141,7 +141,22 @@ func (data *Data) Exiftool(jsonData []byte, originalName string) (err error) {
 				fieldValue.Set(reflect.ValueOf(txt.AddToWords(existing, SanitizeUnicode(jsonValue.String()))))
 			case Keywords:
 				existing := fieldValue.Interface().(Keywords)
-				fieldValue.Set(reflect.ValueOf(txt.AddToWords(existing, SanitizeUnicode(jsonValue.String()))))
+				if jsonValue.IsArray() {
+					for _, item := range jsonValue.Array() {
+						kw := strings.TrimSpace(SanitizeUnicode(item.String()))
+						if kw != "" {
+							existing = txt.UniqueWordsPreservingCase(append(existing, kw))
+						}
+					}
+				} else {
+					for _, kw := range strings.FieldsFunc(SanitizeUnicode(jsonValue.String()), func(r rune) bool { return r == ',' || r == ';' }) {
+						kw = strings.TrimSpace(kw)
+						if kw != "" {
+							existing = txt.UniqueWordsPreservingCase(append(existing, kw))
+						}
+					}
+				}
+				fieldValue.Set(reflect.ValueOf(existing))
 			case projection.Type:
 				if !fieldValue.IsZero() {
 					continue

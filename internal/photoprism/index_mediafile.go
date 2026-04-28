@@ -260,7 +260,7 @@ func (ind *Index) UserMediaFile(m *MediaFile, o IndexOptions, originalName, phot
 	details := photo.GetDetails()
 	setKeywords := func(value string, src entity.Src) {
 		metadataKeywordsLoaded = true
-		explicitKeywords = append(explicitKeywords, txt.Words(value)...)
+		explicitKeywords = append(explicitKeywords, txt.SplitKeywords(value)...)
 		details.SetKeywords(value, src)
 	}
 

@@ -25,7 +25,7 @@
               v-for="kw in group.keywords"
               :key="kw.full"
               class="keywords-list-item"
-              @click="browseKeyword(kw.full)"
+              @click="browseKeyword(kw.leaf)"
             >{{ kw.leaf }}</button>
           </div>
         </div>

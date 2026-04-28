@@ -97,17 +97,20 @@ docker compose up -d photoprism mariadb traefik dummy-webdav dummy-oidc
 To log into the photoprism container:
 docker exec -it photoprism-photoprism-1 /bin/bash
 
+After changes run:
+make build-js
+
+... or try this for a hot-reload:
+make watch-js
+
 To start photoprism, once logged in:
 ./photoprism start
 
 To view:
 http://localhost:2342/
 
-After changes run:
-make build-js
-
-... or try this for a hot-reload:
-make watch-js
+To view go changes, run the following, then restart photoprism:
+go build -tags="debug,develop" -ldflags "-X main.version=dev" -o photoprism cmd/photoprism/photoprism.go
 
 ## How to Deploy
 

@@ -112,7 +112,7 @@ func savePhoto(req *PhotoSaveRequest) (bool, error) {
 			p.AddLabels(locLabels)
 		}
 		if len(locKeywords) > 0 {
-			words := txt.UniqueWordsPreservingCase(txt.Words(details.Keywords))
+			words := txt.UniqueWordsPreservingCase(txt.SplitKeywords(details.Keywords))
 			words = append(words, locKeywords...)
 			details.Keywords = strings.Join(txt.UniqueWordsPreservingCase(words), ", ")
 		}

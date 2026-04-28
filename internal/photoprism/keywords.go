@@ -13,7 +13,7 @@ func rebuildDetailsKeywords(details *entity.Details, explicitKeywords, generated
 		return
 	}
 
-	current := txt.UniqueWordsPreservingCase(txt.Words(details.Keywords))
+	current := txt.UniqueWordsPreservingCase(txt.SplitKeywords(details.Keywords))
 	generated := txt.UniqueWords(generatedKeywords)
 
 	switch details.KeywordsSrc {

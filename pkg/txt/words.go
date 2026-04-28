@@ -274,6 +274,19 @@ func SortCaseInsensitive(words []string) {
 	copy(words, tmp)
 }
 
+// SplitKeywords splits a comma-separated keyword string into individual tokens,
+// preserving multi-word keywords like "Dan Nixon".
+func SplitKeywords(s string) []string {
+	var results []string
+	for _, kw := range strings.Split(s, ",") {
+		kw = strings.TrimSpace(kw)
+		if kw != "" {
+			results = append(results, kw)
+		}
+	}
+	return results
+}
+
 // StopwordsOnly tests if the string contains stopwords only.
 func StopwordsOnly(s string) bool {
 	s = strings.TrimSpace(s)

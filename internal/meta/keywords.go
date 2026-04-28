@@ -34,7 +34,8 @@ func autoKeywordsEnabled() bool {
 	return entity.AddAIKeywordsEnabled()
 }
 
-// AddKeywords appends keywords.
+// AddKeywords appends keywords, preserving multi-word entries like "Dan Nixon".
+// Input is split on commas and semicolons; each segment is stored as a whole keyword token.
 func (data *Data) AddKeywords(w string) {
 	w = SanitizeMeta(w)
 
@@ -42,7 +43,13 @@ func (data *Data) AddKeywords(w string) {
 		return
 	}
 
-	data.Keywords = txt.AddToWords(data.Keywords, w)
+	for _, kw := range strings.FieldsFunc(w, func(r rune) bool { return r == ',' || r == ';' }) {
+		kw = strings.TrimSpace(kw)
+		if kw == "" {
+			continue
+		}
+		data.Keywords = txt.UniqueWordsPreservingCase(append(data.Keywords, kw))
+	}
 }
 
 // AutoAddKeywords automatically appends relevant keywords from a string (e.g. description).
