@@ -20,10 +20,13 @@
       <template v-else>
         <div v-for="group in groups" :key="group.name" class="keywords-group mb-6">
           <div class="keywords-group__title text-overline text-medium-emphasis mb-2">{{ group.name }}</div>
-          <div class="keywords-group__chips d-flex flex-wrap gap-2">
-            <v-chip v-for="kw in group.keywords" :key="kw.full" variant="tonal" size="small" class="keywords-chip" @click="browseKeyword(kw.full)">{{
-              kw.leaf
-            }}</v-chip>
+          <div class="keywords-group__list">
+            <button
+              v-for="kw in group.keywords"
+              :key="kw.full"
+              class="keywords-list-item"
+              @click="browseKeyword(kw.full)"
+            >{{ kw.leaf }}</button>
           </div>
         </div>
       </template>

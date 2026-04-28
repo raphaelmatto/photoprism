@@ -96,3 +96,24 @@
         margin-bottom: 4px;
     }
 }
+
+.p-page-keywords .keywords-group__title {
+    letter-spacing: 0.08em;
+}
+
+.p-page-keywords .keywords-list-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 3px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: inherit;
+    line-height: 1.5;
+}
+
+.p-page-keywords .keywords-list-item:hover {
+    text-decoration: underline;
+}
