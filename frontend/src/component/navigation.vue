@@ -433,6 +433,18 @@
               <span v-show="config.count.labels > 0" class="nav-count-item">{{ config.count.labels }}</span>
             </v-list-item>
 
+            <v-list-item v-if="isMini && $config.feature('keywords')" to="/keywords" variant="text" class="nav-keywords" :ripple="false" @click.stop="">
+              <v-icon class="ma-auto">mdi-tag-text-outline</v-icon>
+            </v-list-item>
+            <v-list-item v-else-if="!isMini && $config.feature('keywords')" to="/keywords" variant="text" class="nav-keywords" :ripple="false" @click.stop="">
+              <v-list-item-title class="nav-menu-item">
+                <v-icon>mdi-tag-text-outline</v-icon>
+                <p class="nav-item-title">
+                  {{ $gettext(`Keywords`) }}
+                </p>
+              </v-list-item-title>
+            </v-list-item>
+
             <v-list-item
               v-if="isMini && $config.feature('folders')"
               :to="{ name: 'folders' }"

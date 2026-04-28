@@ -14,6 +14,7 @@ type FeatureSettings struct {
 	Files     bool `json:"files" yaml:"Files"`
 	Folders   bool `json:"folders" yaml:"Folders"`
 	Import    bool `json:"import" yaml:"Import"`
+	Keywords  bool `json:"keywords" yaml:"Keywords"`
 	Labels    bool `json:"labels" yaml:"Labels"`
 	Library   bool `json:"library" yaml:"Library"`
 	Logs      bool `json:"logs" yaml:"Logs"`

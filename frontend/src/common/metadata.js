@@ -230,19 +230,34 @@ function detailValue(model, detailKey, flatKey) {
   return stringValue(model?.[flatKey]);
 }
 
+// stripKeywordParent removes the "Parent|" prefix from a single keyword string.
+function stripKeywordParent(keyword) {
+  const sep = keyword.indexOf("|");
+  return sep === -1 ? keyword : keyword.slice(sep + 1);
+}
+
+// stripKeywordParents strips parent prefixes from a comma-separated keyword string.
+function stripKeywordParents(s) {
+  return s
+    .split(",")
+    .map((k) => stripKeywordParent(k.trim()))
+    .filter(Boolean)
+    .join(", ");
+}
+
 function keywordsValue(model) {
   const flat = stringValue(model?.DetailsKeywords);
   if (flat) {
-    return flat;
+    return stripKeywordParents(flat);
   }
 
   const nested = stringValue(model?.Details?.Keywords);
   if (nested) {
-    return nested;
+    return stripKeywordParents(nested);
   }
 
   if (Array.isArray(model?.Keywords)) {
-    return model.Keywords.map((keyword) => stringValue(keyword?.Name || keyword?.Title || keyword))
+    return model.Keywords.map((keyword) => stripKeywordParent(stringValue(keyword?.Name || keyword?.Title || keyword)))
       .filter(Boolean)
       .join(", ");
   }

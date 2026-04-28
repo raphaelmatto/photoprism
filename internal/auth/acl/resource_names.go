@@ -13,6 +13,7 @@ var ResourceNames = []Resource{
 	ResourceCalendar,
 	ResourcePeople,
 	ResourcePlaces,
+	ResourceKeywords,
 	ResourceLabels,
 	ResourceConfig,
 	ResourceSettings,

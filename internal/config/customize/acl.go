@@ -12,6 +12,7 @@ func (s *Settings) ApplyACL(list acl.ACL, role acl.Role) *Settings {
 	m.Features.Albums = s.Features.Albums && list.AllowAny(acl.ResourceAlbums, role, acl.Permissions{acl.ActionView})
 	m.Features.Favorites = s.Features.Favorites && list.AllowAny(acl.ResourceFavorites, role, acl.Permissions{acl.ActionSearch})
 	m.Features.Folders = s.Features.Folders && list.AllowAny(acl.ResourceFolders, role, acl.Permissions{acl.ActionSearch})
+	m.Features.Keywords = s.Features.Keywords && list.AllowAny(acl.ResourceKeywords, role, acl.Permissions{acl.ActionSearch})
 	m.Features.Labels = s.Features.Labels && list.AllowAny(acl.ResourceLabels, role, acl.Permissions{acl.ActionSearch})
 	m.Features.Calendar = s.Features.Calendar && list.AllowAny(acl.ResourceCalendar, role, acl.Permissions{acl.ActionSearch})
 	m.Features.Moments = s.Features.Moments && list.AllowAny(acl.ResourceMoments, role, acl.Permissions{acl.ActionSearch})

@@ -60,6 +60,7 @@ const (
 	ResourceMoments   Resource = "moments"
 	ResourcePeople    Resource = "people"
 	ResourcePlaces    Resource = "places"
+	ResourceKeywords  Resource = "keywords"
 	ResourceLabels    Resource = "labels"
 	ResourceConfig    Resource = "config"
 	ResourceSettings  Resource = "settings"

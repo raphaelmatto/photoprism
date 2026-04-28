@@ -150,6 +150,9 @@ func registerRoutes(router *gin.Engine, conf *config.Config) {
 	api.AddPhotosToAlbum(APIv1)
 	api.RemovePhotosFromAlbum(APIv1)
 
+	// Photo Keywords.
+	api.SearchKeywords(APIv1)
+
 	// Photo Labels.
 	api.SearchLabels(APIv1)
 	api.LabelCover(APIv1)

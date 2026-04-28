@@ -53,6 +53,12 @@ var Rules = ACL{
 		RolePortal:  GrantUseOwn,
 		RoleClient:  GrantFullAccess,
 	},
+	ResourceKeywords: Roles{
+		RoleAdmin:   GrantFullAccess,
+		RoleGuest:   GrantSearchShared,
+		RoleVisitor: GrantSearchShared,
+		RoleClient:  GrantFullAccess,
+	},
 	ResourceLabels: Roles{
 		RoleAdmin:  GrantFullAccess,
 		RoleClient: GrantFullAccess,

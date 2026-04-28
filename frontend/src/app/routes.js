@@ -29,6 +29,7 @@ import AlbumPhotos from "page/album/photos.vue";
 import Places from "page/places.vue";
 import Browse from "page/library/browse.vue";
 import Errors from "page/library/errors.vue";
+import Keywords from "page/keywords.vue";
 import Labels from "page/labels.vue";
 import People from "page/people.vue";
 import Library from "page/library.vue";
@@ -423,6 +424,21 @@ export default [
       if ($session.loginRequired()) {
         next({ name: loginRoute });
       } else if ($config.deny("labels", "search")) {
+        next({ name: $session.getDefaultRoute() });
+      } else {
+        next();
+      }
+    },
+  },
+  {
+    name: "keywords",
+    path: "/keywords",
+    component: Keywords,
+    meta: { title: $gettext("Keywords"), requiresAuth: true },
+    beforeEnter: (to, from, next) => {
+      if ($session.loginRequired()) {
+        next({ name: loginRoute });
+      } else if ($config.deny("keywords", "search")) {
         next({ name: $session.getDefaultRoute() });
       } else {
         next();
