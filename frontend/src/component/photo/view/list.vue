@@ -260,7 +260,6 @@ export default {
       return {
         backgroundImage: `url(${photo.thumbnailUrl(thumbSize)})`,
         backgroundSize: "contain",
-        backgroundColor: "rgba(var(--v-theme-surface-variant), 0.22)",
       };
     },
     isSelected(m) {
