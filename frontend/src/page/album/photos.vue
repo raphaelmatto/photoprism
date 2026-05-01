@@ -614,11 +614,11 @@ export default {
             this.hideExpansionPanel();
           }
 
-          this.offset = this.batchSize;
+          this.offset = this.activeBatchSize;
           this.results = response.models;
           this.lightbox.results = [];
           this.lightbox.complete = false;
-          this.complete = response.count < this.batchSize;
+          this.complete = response.count < this.activeBatchSize;
           this.scrollDisabled = this.complete;
 
           if (this.complete) {
