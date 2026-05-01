@@ -146,13 +146,15 @@ export default {
   },
   methods: {
     thumbInfo(photo) {
-      const dpr = this.$config.getSettings()?.display?.retinaLightbox ? window.devicePixelRatio || 1 : 1;
+      const display = this.$config.getSettings()?.display;
+      const dpr = display?.retinaLightbox ? window.devicePixelRatio || 1 : 1;
       const thumbs = Thumb.fromPhoto(photo).Thumbs;
-      const thumb = this.$util.thumb(thumbs, Math.round(window.innerWidth * dpr), Math.round(window.innerHeight * dpr));
+      const original = display?.originals ? thumbs?.original : null;
+      const source = original || this.$util.thumb(thumbs, Math.round(window.innerWidth * dpr), Math.round(window.innerHeight * dpr));
       return {
-        src: thumb.src,
-        width: Math.round(thumb.w / dpr),
-        height: Math.round(thumb.h / dpr),
+        src: source.src,
+        width: Math.round(source.w / dpr),
+        height: Math.round(source.h / dpr),
         alt: photo.Title,
       };
     },
