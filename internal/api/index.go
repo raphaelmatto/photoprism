@@ -61,7 +61,19 @@ func StartIndexing(router *gin.RouterGroup) {
 		convert := settings.Index.Convert && conf.SidecarWritable()
 		skipArchived := settings.Index.SkipArchived
 
-		indOpt := photoprism.NewIndexOptions(filepath.Clean(frm.Path), frm.Rescan, convert, true, false, skipArchived, conf)
+		// Clear manual/batch source markers before indexing so file metadata
+		// wins over previously-edited values. Implies a full rescan because
+		// untouched files would otherwise be skipped by SkipUnchanged.
+		if frm.OverwriteMeta && s.GetUser().IsAdmin() {
+			if updated, resetErr := photoprism.ResetMetadataSrc(); resetErr != nil {
+				log.Errorf("index: %s (reset metadata src)", resetErr)
+			} else if updated > 0 {
+				log.Infof("index: cleared %s metadata source markers before reindex", english.Plural(int(updated), "row", "rows"))
+			}
+		}
+
+		rescan := frm.Rescan || (frm.OverwriteMeta && s.GetUser().IsAdmin())
+		indOpt := photoprism.NewIndexOptions(filepath.Clean(frm.Path), rescan, convert, true, false, skipArchived, conf)
 		indOpt.SetUser(s.GetUser())
 
 		if len(indOpt.Path) > 1 {

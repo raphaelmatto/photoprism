@@ -114,3 +114,39 @@ func TestUnserialize(t *testing.T) {
 
 	assert.Equal(t, 0, form.Count)
 }
+
+func TestUnserializeBareQuotedSegments(t *testing.T) {
+	t.Run("PhrasePreserved", func(t *testing.T) {
+		form := &TestForm{}
+		if err := Unserialize(form, `"Family reunion" raphe`); err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, `"family reunion" raphe`, form.Query)
+	})
+
+	t.Run("MultiplePhrases", func(t *testing.T) {
+		form := &TestForm{}
+		if err := Unserialize(form, `"Dan Nixon" & "Family reunion"`); err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, `"dan nixon" & "family reunion"`, form.Query)
+	})
+
+	t.Run("KeyValueQuotesStillConsumed", func(t *testing.T) {
+		form := &TestForm{}
+		if err := Unserialize(form, `name:"yo BAR.jpg"`); err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, "yo BAR.jpg", form.Name)
+		assert.Equal(t, "", form.Query)
+	})
+
+	t.Run("MixedKeyValueAndPhrase", func(t *testing.T) {
+		form := &TestForm{}
+		if err := Unserialize(form, `"Family reunion" name:"foo.jpg"`); err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, `"family reunion"`, form.Query)
+		assert.Equal(t, "foo.jpg", form.Name)
+	})
+}

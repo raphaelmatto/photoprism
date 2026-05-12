@@ -40,6 +40,10 @@ var indexFlags = []cli.Flag{
 		Aliases: []string{"c"},
 		Usage:   "removes orphan index entries and thumbnails",
 	},
+	&cli.BoolFlag{
+		Name:  "overwrite-meta",
+		Usage: "allow file metadata (IPTC/EXIF/XMP) to overwrite previously-edited values, implies --force",
+	},
 }
 
 // indexAction indexes all photos in originals directory (photo library)
@@ -74,11 +78,24 @@ func indexAction(ctx *cli.Context) error {
 	var found fs.Done
 	var indexed int
 
+	overwriteMeta := ctx.Bool("overwrite-meta")
+
+	// Clear manual/batch source markers so the next index pass can overwrite
+	// previously-edited values with the latest file metadata.
+	if overwriteMeta {
+		if updated, resetErr := photoprism.ResetMetadataSrc(); resetErr != nil {
+			return resetErr
+		} else if updated > 0 {
+			log.Infof("index: cleared %s metadata source markers before reindex", english.Plural(int(updated), "row", "rows"))
+		}
+	}
+
 	// Update file index.
 	if w := get.Index(); w != nil {
 		indexStart := time.Now()
 		convert := conf.Settings().Index.Convert && conf.SidecarWritable()
-		opt := photoprism.NewIndexOptions(subPath, ctx.Bool("force"), convert, true, false, !ctx.Bool("archived"), conf)
+		rescan := ctx.Bool("force") || overwriteMeta
+		opt := photoprism.NewIndexOptions(subPath, rescan, convert, true, false, !ctx.Bool("archived"), conf)
 
 		found, indexed = w.Start(opt)
 
@@ -91,7 +108,7 @@ func indexAction(ctx *cli.Context) error {
 		opt := photoprism.PurgeOptions{
 			Path:   subPath,
 			Ignore: found,
-			Force:  ctx.Bool("force") || ctx.Bool("cleanup") || indexed > 0,
+			Force:  ctx.Bool("force") || ctx.Bool("cleanup") || overwriteMeta || indexed > 0,
 		}
 
 		// Start purge.

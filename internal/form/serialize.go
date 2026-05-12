@@ -175,6 +175,12 @@ func Unserialize(f SearchForm, q string) (result error) {
 			isKeyValue = true
 		case char == '"':
 			escaped = !escaped
+			// Preserve quote markers in bare segments so phrase search can
+			// distinguish "Family reunion" from family reunion downstream.
+			// In key:"value" filter parsing the quotes are still consumed.
+			if !isKeyValue {
+				key = append(key, '"')
+			}
 		case isKeyValue:
 			value = append(value, char)
 		default:

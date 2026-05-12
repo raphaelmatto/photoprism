@@ -123,8 +123,12 @@ export default {
 
       return groups;
     },
-    browseKeyword(fullKeyword) {
-      this.$router.push({ name: "browse", query: { q: fullKeyword } });
+    browseKeyword(keyword) {
+      // Wrap the keyword in quotes so the backend treats it as a literal
+      // phrase: multi-word keywords match the exact tag, and single-word
+      // keywords skip the prefix-LIKE that would otherwise pull in unrelated
+      // words sharing the same prefix.
+      this.$router.push({ name: "browse", query: { q: `"${keyword}"` } });
     },
   },
 };

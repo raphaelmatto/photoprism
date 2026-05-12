@@ -318,8 +318,13 @@ func searchPhotos(frm form.SearchPhotos, sess *entity.Session, resultCols string
 		}
 	}
 
-	// Set search filters based on search terms.
-	if terms := txt.SearchTerms(frm.Query); frm.Query != "" && len(terms) == 0 {
+	// Set search filters based on search terms. txt.SearchTerms filters
+	// stopwords like "the" and "van"; if the resulting term set is empty we
+	// would normally fall back to a title/caption prefix search. Skip that
+	// fallback when the query still parses into a usable AST, so single
+	// stopword-like queries (e.g. searching the surname "Van") still hit the
+	// keyword index.
+	if terms := txt.SearchTerms(frm.Query); frm.Query != "" && len(terms) == 0 && parseQuery(frm.Query) == nil {
 		if frm.Title == "" && frm.Caption == "" && frm.Description == "" {
 			frm.Description = fmt.Sprintf("%s*", strings.Trim(frm.Query, "%*"))
 			frm.Query = ""
@@ -402,38 +407,44 @@ func searchPhotos(frm form.SearchPhotos, sess *entity.Session, resultCols string
 		s = s.Where("photos.cell_id <> 'zz'")
 	}
 
-	// Filter by query string.
+	// Filter by query string. The query is parsed into an AST that supports
+	// quoted phrases, &/| operators with AND binding tighter than OR, and
+	// parenthesized groups; see internal/entity/search/query.go for the spec.
 	if frm.Query != "" {
-		var categories []entity.Category
-		var labels []entity.Label
-		var labelIds []uint
+		if ast := parseQuery(frm.Query); ast != nil {
+			clause := buildQuerySQL(ast)
 
-		if labelsErr := Db().Where(AnySlug("custom_slug", frm.Query, " ")).Find(&labels).Error; len(labels) == 0 || labelsErr != nil {
-			log.Tracef("search: label %s not found, using fuzzy search", txt.LogParamLower(frm.Query))
+			// If any bare word in the query matches a label slug, include
+			// photos tagged with that label (and its sub-categories) as an
+			// OR'd alternative to the keyword/phrase match.
+			var labelIDs []uint
+			if words := collectWords(ast); len(words) > 0 {
+				var labels []entity.Label
+				if labelErr := Db().Where(AnySlug("custom_slug", strings.Join(words, " "), " ")).
+					Or(AnySlug("label_slug", strings.Join(words, " "), " ")).
+					Find(&labels).Error; labelErr == nil {
+					for _, l := range labels {
+						labelIDs = append(labelIDs, l.ID)
 
-			for _, where := range LikeAnyKeyword("k.keyword", frm.Query) {
-				s = s.Where("files.photo_id IN (SELECT pk.photo_id FROM keywords k JOIN photos_keywords pk ON k.id = pk.keyword_id WHERE (?))", gorm.Expr(where))
-			}
-		} else {
-			for _, l := range labels {
-				labelIds = append(labelIds, l.ID)
-
-				Db().Where("category_id = ?", l.ID).Find(&categories)
-
-				log.Tracef("search: label %s includes %d categories", txt.LogParamLower(l.LabelName), len(categories))
-
-				for _, category := range categories {
-					labelIds = append(labelIds, category.LabelID)
+						var categories []entity.Category
+						Db().Where("category_id = ?", l.ID).Find(&categories)
+						for _, c := range categories {
+							labelIDs = append(labelIDs, c.LabelID)
+						}
+					}
 				}
 			}
 
-			if wheres := LikeAnyKeyword("k.keyword", frm.Query); len(wheres) > 0 {
-				for _, where := range wheres {
-					s = s.Where("files.photo_id IN (SELECT pk.photo_id FROM keywords k JOIN photos_keywords pk ON k.id = pk.keyword_id WHERE (?)) OR "+
-						"files.photo_id IN (SELECT pl.photo_id FROM photos_labels pl WHERE pl.uncertainty < 100 AND pl.label_id IN (?))", gorm.Expr(where), labelIds)
+			if clause.sql != "" {
+				if len(labelIDs) > 0 {
+					sql := "(" + clause.sql + " OR photos.id IN (SELECT pl.photo_id FROM photos_labels pl WHERE pl.uncertainty < 100 AND pl.label_id IN (?)))"
+					args := append(clause.args, labelIDs)
+					s = s.Where(sql, args...)
+				} else {
+					s = s.Where(clause.sql, clause.args...)
 				}
-			} else {
-				s = s.Where("files.photo_id IN (SELECT pl.photo_id FROM photos_labels pl WHERE pl.uncertainty < 100 AND pl.label_id IN (?))", labelIds)
+			} else if len(labelIDs) > 0 {
+				s = s.Where("photos.id IN (SELECT pl.photo_id FROM photos_labels pl WHERE pl.uncertainty < 100 AND pl.label_id IN (?))", labelIDs)
 			}
 		}
 	}

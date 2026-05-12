@@ -46,7 +46,11 @@ func TestPhotosFilterFilter(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		assert.Len(t, photos, 1)
+		// Bare-word search now also prefix-matches title and caption (so
+		// single letters like "N" find "Neckarbrücke" without a separate
+		// description fallback). The query tokenizes to "i", "love", "*",
+		// "dog", which prefix-matches several fixtures by title or keyword.
+		assert.Len(t, photos, 5)
 	})
 	t.Run("EndsWithPercent", func(t *testing.T) {
 		var f form.SearchPhotos
@@ -286,7 +290,10 @@ func TestPhotosQueryFilter(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		assert.Len(t, photos, 1)
+		// Quoted segments are now treated as literal phrases rather than
+		// being tokenized into words, so "I love % dog" no longer falls
+		// through to a word-level match against the "love"/"dog" keywords.
+		assert.Len(t, photos, 0)
 	})
 	t.Run("EndsWithPercent", func(t *testing.T) {
 		var f form.SearchPhotos

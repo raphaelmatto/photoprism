@@ -196,7 +196,7 @@ func SavePhotoForm(m *Photo, form form.Photo) error {
 			return err
 		}
 
-		details.Keywords = strings.Join(txt.UniqueWordsPreservingCase(txt.Words(details.Keywords)), ", ")
+		details.Keywords = strings.Join(txt.UniqueWordsPreservingCase(txt.SplitKeywords(details.Keywords)), ", ")
 	}
 
 	if locChanged && (m.PlaceSrc == SrcManual || m.PlaceSrc == SrcBatch) {
@@ -204,7 +204,7 @@ func SavePhotoForm(m *Photo, form form.Photo) error {
 
 		m.AddLabels(labels)
 
-		w := txt.UniqueWordsPreservingCase(txt.Words(details.Keywords))
+		w := txt.UniqueWordsPreservingCase(txt.SplitKeywords(details.Keywords))
 		w = append(w, locKeywords...)
 
 		details.Keywords = strings.Join(txt.UniqueWordsPreservingCase(w), ", ")
@@ -595,7 +595,7 @@ func (m *Photo) BeforeSave(scope *gorm.Scope) error {
 func (m *Photo) RemoveKeyword(w string) error {
 	details := m.GetDetails()
 
-	words := txt.RemoveFromWordsPreservingCase(txt.Words(details.Keywords), w)
+	words := txt.RemoveFromWordsPreservingCase(txt.SplitKeywords(details.Keywords), w)
 	details.Keywords = strings.Join(words, ", ")
 
 	return nil
@@ -611,7 +611,7 @@ func (m *Photo) DropKeywords(remove []string) error {
 
 	original := details.Keywords
 
-	words := txt.Words(details.Keywords)
+	words := txt.SplitKeywords(details.Keywords)
 
 	for _, w := range remove {
 		if w != "" {
@@ -722,7 +722,12 @@ func (m *Photo) UpdateKeywordLabels() error {
 	return Db().Where("label_src = ? AND photo_id = ? AND label_id NOT IN (?)", classify.SrcKeyword, m.ID, labelIds).Delete(&PhotoLabel{}).Error
 }
 
-// IndexKeywords synchronizes the photo-keyword join table based on normalized keywords from titles, captions, and metadata.
+// IndexKeywords synchronizes the photo-keyword join table based on normalized
+// keywords from titles, captions, and metadata. Multi-word IPTC keywords like
+// "Family reunion" are stored as a single keyword row in addition to their
+// individual words, so phrase search can match the exact tag while prefix
+// search still finds either word. details.Artist is intentionally not indexed
+// because it tends to be set library-wide and would pollute keyword search.
 func (m *Photo) IndexKeywords() error {
 	db := UnscopedDb()
 	details := m.GetDetails()
@@ -734,10 +739,24 @@ func (m *Photo) IndexKeywords() error {
 	keywords = append(keywords, txt.Keywords(m.GetTitle())...)
 	keywords = append(keywords, txt.Keywords(m.GetCaption())...)
 	keywords = append(keywords, m.SubjectKeywords()...)
-	keywords = append(keywords, txt.Words(details.Keywords)...)
+
+	// Index IPTC keyword phrases as whole tokens plus their constituent
+	// words. For hierarchical paths like "Person|Thanh Van", also index each
+	// segment as a standalone phrase so leaf-level phrase search works.
+	for _, phrase := range txt.SplitKeywords(details.Keywords) {
+		keywords = append(keywords, phrase)
+		keywords = append(keywords, txt.Words(phrase)...)
+		if strings.Contains(phrase, "|") {
+			for _, seg := range strings.Split(phrase, "|") {
+				if seg = strings.TrimSpace(seg); seg != "" {
+					keywords = append(keywords, seg)
+				}
+			}
+		}
+	}
+
 	keywords = append(keywords, m.LabelKeywords()...)
 	keywords = append(keywords, txt.Keywords(details.Subject)...)
-	keywords = append(keywords, txt.Keywords(details.Artist)...)
 
 	keywords = txt.UniqueWords(keywords)
 

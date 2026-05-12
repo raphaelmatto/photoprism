@@ -438,7 +438,7 @@ func (m *Photo) SaveLocation() error {
 
 	m.AddLabels(labels)
 
-	w := txt.UniqueWordsPreservingCase(txt.Words(m.GetDetails().Keywords))
+	w := txt.UniqueWordsPreservingCase(txt.SplitKeywords(m.GetDetails().Keywords))
 	w = append(w, locKeywords...)
 
 	m.GetDetails().Keywords = strings.Join(txt.UniqueWordsPreservingCase(w), ", ")

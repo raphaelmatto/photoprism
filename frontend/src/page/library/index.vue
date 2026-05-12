@@ -53,6 +53,16 @@
             persistent-hint
           >
           </v-checkbox>
+          <v-checkbox
+            v-if="isAdmin"
+            v-model="overwriteMeta"
+            :disabled="busy || !ready"
+            :label="$gettext('Overwrite Metadata')"
+            :hint="$gettext('Replace existing values (including previous edits) with the latest IPTC, EXIF, and XMP metadata from each file.')"
+            prepend-icon="mdi-file-replace-outline"
+            persistent-hint
+          >
+          </v-checkbox>
         </div>
       </div>
       <div class="form-actions">
@@ -105,6 +115,7 @@ export default {
       fileName: "",
       eta: "",
       cleanup: false,
+      overwriteMeta: false,
       source: null,
       root: root,
       dirs: [root],
@@ -189,6 +200,7 @@ export default {
         path: this.settings.index.path,
         rescan: this.settings.index.rescan,
         cleanup: this.cleanup,
+        overwriteMeta: this.overwriteMeta,
       };
 
       // Submit POST request.

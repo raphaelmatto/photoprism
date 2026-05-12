@@ -81,7 +81,9 @@ func TestParseQueryString(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		assert.Equal(t, "jens & mander", form.GetQuery())
+		// Bare quoted segments now preserve their quotes so phrase search can
+		// match the literal phrase rather than treating "&" as an AND operator.
+		assert.Equal(t, "\"jens & mander\"", form.GetQuery())
 		assert.Equal(t, "Tübingen", form.Title)
 	})
 	t.Run("Path", func(t *testing.T) {

@@ -109,7 +109,7 @@ To start photoprism, once logged in:
 To view:
 http://localhost:2342/
 
-To view go changes, run the following, then restart photoprism:
+To view go changes, stop photoprism, run the following, then restart photoprism:
 go build -tags="debug,develop" -ldflags "-X main.version=dev" -o photoprism cmd/photoprism/photoprism.go
 
 ## How to Deploy
