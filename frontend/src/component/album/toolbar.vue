@@ -8,13 +8,19 @@
     @submit.prevent="updateQuery()"
   >
     <v-toolbar flat :density="$vuetify.display.smAndDown ? 'compact' : 'default'" class="page-toolbar" color="secondary">
-      <v-toolbar-title :title="album.Title" class="page__title">
+      <v-toolbar-title :title="breadcrumbLabel" class="page__title">
         <router-link :to="{ name: collectionRoute }" class="hidden-xs">
           {{ T(collectionTitle) }}
           <v-icon>{{ navIcon }}</v-icon>
         </router-link>
-        <router-link :to="{ name: collectionRoute }">
-          {{ album.Title }}
+        <template v-if="breadcrumbSegments.length > 1">
+          <template v-for="(seg, i) in breadcrumbSegments" :key="i">
+            <span class="page__title-segment">{{ seg }}</span>
+            <v-icon v-if="i < breadcrumbSegments.length - 1">{{ navIcon }}</v-icon>
+          </template>
+        </template>
+        <router-link v-else :to="{ name: collectionRoute }">
+          {{ breadcrumbLabel }}
         </router-link>
       </v-toolbar-title>
 
@@ -137,6 +143,25 @@ export default {
       },
       titleRule: (v) => v.length <= this.$config.get("clip") || this.$gettext("Name too long"),
     };
+  },
+  computed: {
+    // breadcrumbSegments breaks folder albums into one entry per path level
+    // so the breadcrumb reads "Folders > blog > 2026 > 2026_01_06_mayStreet"
+    // with chevrons between segments and underscores preserved. Other album
+    // types yield a single segment (their human-readable Title).
+    breadcrumbSegments() {
+      if (this.album?.Type === "folder" && this.album?.Path) {
+        return this.album.Path.split("/").filter((s) => s.length > 0);
+      }
+      return [this.album?.Title || ""];
+    },
+    // breadcrumbLabel is the tooltip / fallback string for narrow viewports.
+    breadcrumbLabel() {
+      if (this.album?.Type === "folder" && this.album?.Path) {
+        return "/" + this.album.Path;
+      }
+      return this.album?.Title || "";
+    },
   },
   methods: {
     showExpansionPanel() {

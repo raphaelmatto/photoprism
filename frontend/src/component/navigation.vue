@@ -94,7 +94,18 @@
                 </v-list-item-title>
               </v-list-item>
 
-              <v-list-group>
+              <!-- Magnify icon column with no chevron when the search group has nothing to expand to. -->
+              <v-list-item
+                v-if="!hasSearchSubItems"
+                to="/browse"
+                variant="text"
+                class="nav-browse activator-parent"
+                :ripple="false"
+                @click.stop=""
+              >
+                <v-icon>mdi-magnify</v-icon>
+              </v-list-item>
+              <v-list-group v-else>
                 <template #activator="{ props }">
                   <v-list-item v-bind="props" variant="text" class="nav-browse activator-parent" @click.stop="">
                     <v-icon>mdi-magnify</v-icon>
@@ -102,6 +113,7 @@
                 </template>
 
                 <v-list-item
+                  v-show="navVisible.searchFilters"
                   :to="{ name: 'browse', query: { q: 'mono:true quality:3 photo:true' } }"
                   :exact="true"
                   variant="text"
@@ -113,13 +125,13 @@
                   </v-list-item-title>
                 </v-list-item>
 
-                <v-list-item :to="{ name: 'browse', query: { q: 'panoramas' } }" :exact="true" variant="text" class="nav-panoramas" @click.stop="">
+                <v-list-item v-show="navVisible.searchFilters" :to="{ name: 'browse', query: { q: 'panoramas' } }" :exact="true" variant="text" class="nav-panoramas" @click.stop="">
                   <v-list-item-title :class="`nav-menu-item menu-item`">
                     {{ $gettext(`Panoramas`) }}
                   </v-list-item-title>
                 </v-list-item>
 
-                <v-list-item :to="{ name: 'photos', query: { q: 'stacks' } }" :exact="true" variant="text" class="nav-stacks" @click.stop="">
+                <v-list-item v-show="navVisible.searchFilters" :to="{ name: 'photos', query: { q: 'stacks' } }" :exact="true" variant="text" class="nav-stacks" @click.stop="">
                   <v-list-item-title :class="`nav-menu-item menu-item`">
                     {{ $gettext(`Stacks`) }}
                   </v-list-item-title>
@@ -138,7 +150,7 @@
                   </v-list-item-title>
                 </v-list-item>
 
-                <v-list-item :to="{ name: 'photos', query: { q: 'scans' } }" :exact="true" variant="text" class="nav-scans" @click.stop="">
+                <v-list-item v-show="navVisible.searchFilters" :to="{ name: 'photos', query: { q: 'scans' } }" :exact="true" variant="text" class="nav-scans" @click.stop="">
                   <v-list-item-title :class="`nav-menu-item menu-item`">
                     {{ $gettext(`Scans`) }}
                   </v-list-item-title>
@@ -181,10 +193,10 @@
               </v-list-group>
             </div>
 
-            <v-list-item v-if="isMini" v-show="$config.feature('albums')" to="/albums" variant="text" class="nav-albums" :ripple="false" @click.stop="">
+            <v-list-item v-if="isMini" v-show="$config.feature('albums') && navVisible.albums" to="/albums" variant="text" class="nav-albums" :ripple="false" @click.stop="">
               <v-icon class="ma-auto">mdi-bookmark</v-icon>
             </v-list-item>
-            <div v-else-if="!isMini" v-show="$config.feature('albums')">
+            <div v-else-if="!isMini" v-show="$config.feature('albums') && navVisible.albums">
               <v-list-item to="/albums" variant="text" class="nav-albums activator" @click.stop="">
                 <v-list-item-title class="nav-menu-item">
                   <p class="nav-item-title">
@@ -201,7 +213,7 @@
                   </v-list-item>
                 </template>
 
-                <v-list-item to="/unsorted" variant="text" class="nav-unsorted">
+                <v-list-item v-show="navVisible.unsorted" to="/unsorted" variant="text" class="nav-unsorted">
                   <v-list-item-title :class="`nav-menu-item menu-item`">
                     {{ $gettext(`Unsorted`) }}
                   </v-list-item-title>
@@ -209,10 +221,10 @@
               </v-list-group>
             </div>
 
-            <v-list-item v-if="isMini && $config.feature('videos')" to="/media" variant="text" class="nav-media" :ripple="false" @click.stop="">
+            <v-list-item v-if="isMini && $config.feature('videos') && navVisible.media" to="/media" variant="text" class="nav-media" :ripple="false" @click.stop="">
               <v-icon class="ma-auto">mdi-play-circle</v-icon>
             </v-list-item>
-            <div v-else-if="!isMini && $config.feature('videos')">
+            <div v-else-if="!isMini && $config.feature('videos') && navVisible.media">
               <v-list-item to="/media" variant="text" class="nav-media activator" @click.stop="">
                 <v-list-item-title class="nav-menu-item">
                   <p class="nav-item-title">
@@ -443,6 +455,7 @@
                   {{ $gettext(`Keywords`) }}
                 </p>
               </v-list-item-title>
+              <span v-show="config.count.keywords > 0" class="nav-count-item">{{ config.count.keywords }}</span>
             </v-list-item>
 
             <v-list-item
@@ -846,6 +859,43 @@ export default {
     },
     visible() {
       return !this.$route.meta.hideNav;
+    },
+    // navVisible reads sidebar entry visibility from the user settings.
+    // Defaults to visible if the settings object is unexpectedly missing
+    // the navigation block, so a broken settings response cannot blank out
+    // the whole sidebar.
+    navVisible() {
+      const nav = this.$config.getSettings()?.display?.navigation || {};
+      return {
+        albums: nav.albums !== false,
+        media: nav.media !== false,
+        unsorted: nav.unsorted !== false,
+        searchFilters: nav.searchFilters !== false,
+      };
+    },
+    // hasSearchSubItems is true when at least one item under the Search
+    // collapsible group would render. When false the whole group (and its
+    // expansion chevron) is hidden so the Search row looks clean.
+    hasSearchSubItems() {
+      if (this.navVisible.searchFilters) {
+        return true;
+      }
+      if (this.isSponsor) {
+        return true; // Vectors
+      }
+      if (this.config?.count?.documents > 0) {
+        return true; // Documents
+      }
+      if (this.canManagePhotos && this.$config.feature("review")) {
+        return true; // Review
+      }
+      if (this.canAccessPrivate && this.$config.feature("private")) {
+        return true; // Private
+      }
+      if (this.$config.feature("archive")) {
+        return true; // Archive
+      }
+      return false;
     },
     displayName() {
       const user = this.$session.getUser();

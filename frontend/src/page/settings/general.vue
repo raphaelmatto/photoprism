@@ -69,6 +69,35 @@
         </v-card-actions>
       </v-card>
 
+      <v-card flat tile class="mt-0 px-1 bg-background">
+        <v-card-title class="pb-2 text-subtitle-2">
+          {{ $gettext(`Navigation`) }}
+        </v-card-title>
+        <v-card-subtitle class="pb-2 text-caption opacity-80">
+          {{ $gettext(`Show or hide entries in the sidebar navigation.`) }}
+        </v-card-subtitle>
+
+        <v-card-actions>
+          <v-row align="start" dense>
+            <v-col v-for="nav in navigationToggles" :key="nav.key" cols="12" sm="6" lg="3" class="px-2 pb-2 pt-2">
+              <v-checkbox
+                v-model="settings.display.navigation[nav.key]"
+                :disabled="busy"
+                class="ma-0 pa-0"
+                :class="`input-nav-${nav.key}`"
+                density="compact"
+                :label="nav.label"
+                :hint="nav.hint"
+                :prepend-icon="nav.icon"
+                persistent-hint
+                @update:model-value="onChange"
+              >
+              </v-checkbox>
+            </v-col>
+          </v-row>
+        </v-card-actions>
+      </v-card>
+
       <v-card v-if="!isPortal && !hasScope && (isDemo || isSuperAdmin)" flat tile class="mt-0 px-1 bg-background">
         <v-card-actions>
           <v-row align="start" dense>
@@ -489,6 +518,33 @@ export default {
         { key: "month", label: this.$gettext("Month"), icon: "mdi-calendar-month-outline" },
         { key: "color", label: this.$gettext("Color"), icon: "mdi-palette-outline" },
         { key: "category", label: this.$gettext("Category"), icon: "mdi-tag-outline" },
+      ],
+      // Sidebar navigation entries the user can show or hide.
+      navigationToggles: [
+        {
+          key: "albums",
+          label: this.$gettext("Albums"),
+          icon: "mdi-bookmark-outline",
+          hint: this.$gettext("Show the Albums section in the sidebar."),
+        },
+        {
+          key: "media",
+          label: this.$gettext("Media"),
+          icon: "mdi-play-circle-outline",
+          hint: this.$gettext("Show the Media section in the sidebar."),
+        },
+        {
+          key: "unsorted",
+          label: this.$gettext("Unsorted"),
+          icon: "mdi-tray-arrow-down",
+          hint: this.$gettext("Show the Unsorted link nested under Albums."),
+        },
+        {
+          key: "searchFilters",
+          label: this.$gettext("Search Filters"),
+          icon: "mdi-magnify",
+          hint: this.$gettext("Show Monochrome, Panoramas, Stacks, and Scans under Search."),
+        },
       ],
       dialog: {
         sponsor: false,

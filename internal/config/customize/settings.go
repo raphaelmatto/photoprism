@@ -101,6 +101,7 @@ func NewSettings(theme, language, timeZone string) *Settings {
 			RetinaThumbnails: false,
 			Metadata:         NewMetadataLayoutSettings(),
 			Filters:          NewFilterSettings(),
+			Navigation:       NewNavigationSettings(),
 		},
 		Templates: TemplateSettings{
 			Default: "index.gohtml",
@@ -174,6 +175,23 @@ func (s *Settings) Propagate() {
 	}
 	if s.Display.Filters.Category == nil {
 		s.Display.Filters.Category = defaultFilters.Category
+	}
+
+	// Fill in nil navigation visibility pointers with the default (visible)
+	// so existing settings.yml files without a Navigation block keep their
+	// sidebar entries.
+	defaultNav := NewNavigationSettings()
+	if s.Display.Navigation.Albums == nil {
+		s.Display.Navigation.Albums = defaultNav.Albums
+	}
+	if s.Display.Navigation.Media == nil {
+		s.Display.Navigation.Media = defaultNav.Media
+	}
+	if s.Display.Navigation.Unsorted == nil {
+		s.Display.Navigation.Unsorted = defaultNav.Unsorted
+	}
+	if s.Display.Navigation.SearchFilters == nil {
+		s.Display.Navigation.SearchFilters = defaultNav.SearchFilters
 	}
 
 	i18n.SetLocale(s.UI.Language)

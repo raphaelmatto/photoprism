@@ -168,3 +168,9 @@
 .p-page-keywords .keyword-tree__label:hover {
     text-decoration: underline;
 }
+
+.p-page-keywords .keyword-tree__count {
+    opacity: 0.55;
+    font-size: 0.85em;
+    margin-inline-start: 4px;
+}

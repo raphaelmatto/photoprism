@@ -165,10 +165,11 @@ export default {
       saveTreeReverse(STORAGE_KEY, this.reverse);
     },
     // buildTree converts the flat keyword list returned by the API into a
-    // nested {name, path, children} structure of arbitrary depth, splitting
-    // each Keyword on "|". Single-segment keywords get a synthetic
-    // "No category" parent so they group together visually below the named
-    // categories.
+    // nested {name, path, count, children} structure of arbitrary depth,
+    // splitting each Keyword on "|". Per-keyword photo counts come from the
+    // API; counts only get stamped onto the leaf node (matching the literal
+    // keyword string). Single-segment keywords get a synthetic "No category"
+    // parent so they group visually below the named categories.
     buildTree(keywords) {
       const noCategory = this.$gettext("No category");
       const root = new Map();
@@ -177,6 +178,8 @@ export default {
       for (const kw of keywords) {
         const raw = (kw.Keyword || "").trim();
         if (!raw) continue;
+
+        const count = Number.isFinite(kw.Count) ? Math.max(0, Math.trunc(kw.Count)) : 0;
 
         const segments = raw
           .split("|")
@@ -190,22 +193,29 @@ export default {
             standalone.set(segments[0], {
               name: segments[0],
               path: segments[0],
+              count: 0,
               children: new Map(),
             });
           }
+          standalone.get(segments[0]).count = count;
           continue;
         }
 
         let parentMap = root;
         const acc = [];
-        for (const seg of segments) {
+        for (let i = 0; i < segments.length; i++) {
+          const seg = segments[i];
           acc.push(seg);
           if (!parentMap.has(seg)) {
             parentMap.set(seg, {
               name: seg,
               path: acc.join("|"),
+              count: 0,
               children: new Map(),
             });
+          }
+          if (i === segments.length - 1) {
+            parentMap.get(seg).count = count;
           }
           parentMap = parentMap.get(seg).children;
         }
@@ -217,6 +227,7 @@ export default {
         tree.push({
           name: noCategory,
           path: `__no_category__`,
+          count: 0,
           children: this.mapToSortedArray(standalone),
         });
       }
@@ -228,6 +239,7 @@ export default {
         .map((node) => ({
           name: node.name,
           path: node.path,
+          count: node.count || 0,
           children: this.mapToSortedArray(node.children),
         }))
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));

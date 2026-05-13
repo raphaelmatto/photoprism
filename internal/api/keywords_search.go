@@ -16,7 +16,7 @@ import (
 //	@Id			SearchKeywords
 //	@Tags		Keywords
 //	@Produce	json
-//	@Success	200				{object}	entity.Keyword
+//	@Success	200				{array}	search.KeywordResult
 //	@Failure	401,403			{object}	i18n.Response
 //	@Router		/api/v1/keywords [get]
 func SearchKeywords(router *gin.RouterGroup) {

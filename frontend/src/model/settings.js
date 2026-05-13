@@ -102,6 +102,24 @@ export class Settings extends Model {
       }
     }
 
+    // Sidebar navigation visibility toggles. Same defaults-to-true approach
+    // as the filter toggles above so upgrades leave the UI unchanged.
+    const navigationDefaults = {
+      albums: true,
+      media: true,
+      unsorted: true,
+      searchFilters: true,
+    };
+    if (!values.display.navigation || typeof values.display.navigation !== "object") {
+      values.display.navigation = { ...navigationDefaults };
+    } else {
+      for (const key of Object.keys(navigationDefaults)) {
+        if (typeof values.display.navigation[key] !== "boolean") {
+          values.display.navigation[key] = navigationDefaults[key];
+        }
+      }
+    }
+
     super.setValues(values, scalarOnly);
 
     return this;

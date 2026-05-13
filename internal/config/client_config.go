@@ -8,6 +8,7 @@ import (
 	"github.com/photoprism/photoprism/internal/config/customize"
 	"github.com/photoprism/photoprism/internal/entity"
 	"github.com/photoprism/photoprism/internal/entity/query"
+	"github.com/photoprism/photoprism/internal/entity/search"
 	"github.com/photoprism/photoprism/pkg/env"
 	"github.com/photoprism/photoprism/pkg/media/colors"
 	"github.com/photoprism/photoprism/pkg/txt"
@@ -180,6 +181,7 @@ type ClientCounts struct {
 	Places         int `json:"places"`
 	Labels         int `json:"labels"`
 	LabelMaxPhotos int `json:"labelMaxPhotos"`
+	Keywords       int `json:"keywords"`
 }
 
 // CategoryLabels enumerates label metadata exposed to the client for navigation buckets.
@@ -632,6 +634,14 @@ func (c *Config) ClientUser(withSettings bool) *ClientConfig {
 		Where("deleted_at IS NULL").
 		Where("(labels.label_priority >= 0 AND labels.photo_count > 1 OR labels.label_favorite = 1)").
 		Take(&cfg.Count)
+
+	// Count distinct IPTC/XMP keywords that appear on at least one photo so
+	// the sidebar can show "Keywords (N)" next to the nav entry. This reuses
+	// the same parsing path the /api/v1/keywords endpoint uses so the badge
+	// number always matches the Keywords page listing.
+	if keywords, kwErr := search.Keywords(); kwErr == nil {
+		cfg.Count.Keywords = len(keywords)
+	}
 
 	if hidePrivate {
 		c.Db().
