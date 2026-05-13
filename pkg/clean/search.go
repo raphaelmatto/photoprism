@@ -90,18 +90,68 @@ func SearchQuery(s string) string {
 		return Empty
 	}
 
-	// Normalize.
-	s = replaceFoldASCII(s, spaced(EnOr), Or)
-	s = replaceFoldASCII(s, spaced(EnOr), Or)
-	s = replaceFoldASCII(s, spaced(EnAnd), And)
-	s = replaceFoldASCII(s, spaced(EnWith), And)
-	s = replaceFoldASCII(s, spaced(EnIn), And)
-	s = replaceFoldASCII(s, spaced(EnAt), And)
-	s = strings.ReplaceAll(s, SpacedPlus, And)
+	// Apply the natural-language operator replacements (" and " -> "&",
+	// " or " -> "|", etc.) only to portions outside double-quoted phrases,
+	// so a quoted tag like "Track and Field" or "Black and White" is matched
+	// literally instead of being collapsed to "Track&Field".
+	s = replaceQueryOperators(s)
+
+	// Wildcard normalization applies to the whole string; "%" inside or
+	// outside a quoted phrase is consistently treated as the "*" wildcard.
 	s = strings.ReplaceAll(s, "%%", "%")
 	s = strings.ReplaceAll(s, "%", "*")
 	s = strings.ReplaceAll(s, "**", "*")
 
 	// Trim.
 	return strings.Trim(s, "|${}\\<>: \n\r\t")
+}
+
+// replaceQueryOperators rewrites natural-language conjunctions and the
+// spaced-plus shorthand to their canonical operator symbols, skipping
+// content inside double-quoted phrases so literal "and"/"or" survive.
+func replaceQueryOperators(s string) string {
+	if !strings.ContainsRune(s, '"') {
+		return rewriteOperatorTokens(s)
+	}
+
+	var out, bare strings.Builder
+	out.Grow(len(s))
+	bare.Grow(len(s))
+	inQuote := false
+
+	flushBare := func() {
+		if bare.Len() > 0 {
+			out.WriteString(rewriteOperatorTokens(bare.String()))
+			bare.Reset()
+		}
+	}
+
+	for _, r := range s {
+		if r == '"' {
+			flushBare()
+			out.WriteRune(r)
+			inQuote = !inQuote
+			continue
+		}
+		if inQuote {
+			out.WriteRune(r)
+		} else {
+			bare.WriteRune(r)
+		}
+	}
+	flushBare()
+
+	return out.String()
+}
+
+// rewriteOperatorTokens performs the natural-language operator replacements
+// on a string assumed to contain no double-quote characters.
+func rewriteOperatorTokens(s string) string {
+	s = replaceFoldASCII(s, spaced(EnOr), Or)
+	s = replaceFoldASCII(s, spaced(EnAnd), And)
+	s = replaceFoldASCII(s, spaced(EnWith), And)
+	s = replaceFoldASCII(s, spaced(EnIn), And)
+	s = replaceFoldASCII(s, spaced(EnAt), And)
+	s = strings.ReplaceAll(s, SpacedPlus, And)
+	return s
 }

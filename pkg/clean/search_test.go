@@ -43,6 +43,21 @@ func TestSearchQuery(t *testing.T) {
 		q := SearchQuery("")
 		assert.Equal(t, "", q)
 	})
+	t.Run("PreservesAndInsideQuotedPhrase", func(t *testing.T) {
+		// "Track and Field" is a literal IPTC keyword; the natural-language
+		// "and" replacement must not collapse it into "Track&Field".
+		q := SearchQuery(`"Track and Field"`)
+		assert.Equal(t, `"Track and Field"`, q)
+	})
+	t.Run("PreservesOrInsideQuotedPhrase", func(t *testing.T) {
+		q := SearchQuery(`"Black or White"`)
+		assert.Equal(t, `"Black or White"`, q)
+	})
+	t.Run("MixedQuotedAndBareReplacements", func(t *testing.T) {
+		// Replacements still happen outside quotes; quoted phrase is literal.
+		q := SearchQuery(`"Track and Field" and raphe`)
+		assert.Equal(t, `"Track and Field"&raphe`, q)
+	})
 }
 
 func BenchmarkSearchQuery_Complex(b *testing.B) {

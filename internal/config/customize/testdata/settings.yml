@@ -26,6 +26,7 @@ Features:
   Files: true
   Folders: true
   Import: true
+  Keywords: true
   Labels: true
   Library: true
   Logs: true
@@ -90,6 +91,15 @@ Display:
     - exposure
     - filename
     - fileInfo
+  Filters:
+    Country: true
+    Camera: true
+    View: true
+    Order: true
+    Year: true
+    Month: true
+    Color: true
+    Category: true
 Albums:
   Download:
     Name: share

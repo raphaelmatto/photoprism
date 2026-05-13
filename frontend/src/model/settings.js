@@ -79,6 +79,29 @@ export class Settings extends Model {
       values.display.metadata.lightbox = defaultMetadataLayout(MetadataView.Lightbox);
     }
 
+    // Filter visibility toggles for the photo search toolbar. Default every
+    // filter to visible so existing users (and fresh installs without an
+    // explicit Filters block in settings.yml) see the historical UI.
+    const filterDefaults = {
+      country: true,
+      camera: true,
+      view: true,
+      order: true,
+      year: true,
+      month: true,
+      color: true,
+      category: true,
+    };
+    if (!values.display.filters || typeof values.display.filters !== "object") {
+      values.display.filters = { ...filterDefaults };
+    } else {
+      for (const key of Object.keys(filterDefaults)) {
+        if (typeof values.display.filters[key] !== "boolean") {
+          values.display.filters[key] = filterDefaults[key];
+        }
+      }
+    }
+
     super.setValues(values, scalarOnly);
 
     return this;

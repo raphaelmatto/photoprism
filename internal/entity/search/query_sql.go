@@ -51,19 +51,32 @@ func wordClause(word string) querySQL {
 	}
 }
 
-// phraseClause matches a quoted phrase. It checks for an exact keyword row and
-// a case-insensitive substring in the photo title and caption.
+// phraseClause matches a quoted phrase. Single-token phrases match only the
+// exact keyword row so that short tag names like "Ai" or "Eva" do not collide
+// with random substrings in titles or captions ("Gail", "Geneva"). Multi-word
+// phrases additionally match a case-insensitive substring in the photo title
+// and caption, since a multi-word string is specific enough that substring
+// noise is no longer a concern.
 func phraseClause(phrase string) querySQL {
 	p := normalizeTerm(phrase)
 	if p == "" {
 		return querySQL{}
 	}
 
+	keywordMatch := "photos.id IN (SELECT pk.photo_id FROM photos_keywords pk JOIN keywords k ON pk.keyword_id = k.id" +
+		" WHERE LOWER(k.keyword) = ?)"
+
+	if !strings.Contains(p, " ") {
+		return querySQL{
+			sql:  "(" + keywordMatch + ")",
+			args: []interface{}{p},
+		}
+	}
+
 	substr := "%" + likeEscaper.Replace(p) + "%"
 
 	return querySQL{
-		sql: "(photos.id IN (SELECT pk.photo_id FROM photos_keywords pk JOIN keywords k ON pk.keyword_id = k.id" +
-			" WHERE LOWER(k.keyword) = ?)" +
+		sql: "(" + keywordMatch +
 			" OR LOWER(photos.photo_title) LIKE ?" +
 			" OR LOWER(photos.photo_caption) LIKE ?)",
 		args: []interface{}{p, substr, substr},

@@ -104,7 +104,7 @@
         <v-card v-show="expanded" flat color="secondary">
           <v-card-text class="dense">
             <v-row align="center" dense>
-              <v-col cols="12" sm="6" md="3" class="p-countries-select">
+              <v-col v-if="filterVisible('country')" cols="12" sm="6" md="3" class="p-countries-select">
                 <v-select
                   :model-value="filter.country"
                   :label="$gettext('Country')"
@@ -125,7 +125,7 @@
                 >
                 </v-select>
               </v-col>
-              <v-col cols="12" sm="6" md="3" class="p-camera-select">
+              <v-col v-if="filterVisible('camera')" cols="12" sm="6" md="3" class="p-camera-select">
                 <v-select
                   :model-value="filter.camera"
                   :label="$gettext('Camera')"
@@ -145,7 +145,7 @@
                 >
                 </v-select>
               </v-col>
-              <v-col cols="12" sm="6" md="3" class="p-view-select">
+              <v-col v-if="filterVisible('view')" cols="12" sm="6" md="3" class="p-view-select">
                 <v-select
                   id="viewSelect"
                   :model-value="settings.view"
@@ -165,7 +165,7 @@
                 >
                 </v-select>
               </v-col>
-              <v-col cols="12" sm="6" md="3" class="p-time-select">
+              <v-col v-if="filterVisible('order')" cols="12" sm="6" md="3" class="p-time-select">
                 <v-select
                   :model-value="filter.order"
                   :label="$gettext('Sort Order')"
@@ -184,7 +184,7 @@
                 >
                 </v-select>
               </v-col>
-              <v-col cols="12" sm="6" md="3" class="p-year-select">
+              <v-col v-if="filterVisible('year')" cols="12" sm="6" md="3" class="p-year-select">
                 <v-select
                   :model-value="filter.year"
                   :label="$gettext('Year')"
@@ -203,7 +203,7 @@
                 >
                 </v-select>
               </v-col>
-              <v-col cols="12" sm="6" md="3" class="p-month-select">
+              <v-col v-if="filterVisible('month')" cols="12" sm="6" md="3" class="p-month-select">
                 <v-select
                   :model-value="filter.month"
                   :label="$gettext('Month')"
@@ -236,7 +236,7 @@
                           :items="lensOptions">
                 </v-select>
             </v-col -->
-              <v-col cols="12" sm="6" md="3" class="p-color-select">
+              <v-col v-if="filterVisible('color')" cols="12" sm="6" md="3" class="p-color-select">
                 <v-select
                   :model-value="filter.color"
                   :label="$gettext('Color')"
@@ -256,7 +256,7 @@
                 >
                 </v-select>
               </v-col>
-              <v-col cols="12" sm="6" md="3" class="p-category-select">
+              <v-col v-if="filterVisible('category')" cols="12" sm="6" md="3" class="p-category-select">
                 <v-select
                   :model-value="filter.label"
                   :label="$gettext('Category')"
@@ -444,6 +444,15 @@ export default {
     },
   },
   methods: {
+    // filterVisible reads the per-filter visibility flag from the active
+    // user settings via $config. The `settings` prop passed in by photos.vue
+    // is local UI state (only `view`) and does not include the saved user
+    // settings, so we read $config.getSettings() directly. Defaults to
+    // visible if the path is unexpectedly missing, so a broken settings
+    // response cannot silently hide the entire filter row.
+    filterVisible(key) {
+      return this.$config.getSettings()?.display?.filters?.[key] !== false;
+    },
     showExpansionPanel() {
       if (!this.expanded) {
         this.expanded = true;

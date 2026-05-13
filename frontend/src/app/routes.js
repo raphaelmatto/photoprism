@@ -30,6 +30,7 @@ import Places from "page/places.vue";
 import Browse from "page/library/browse.vue";
 import Errors from "page/library/errors.vue";
 import Keywords from "page/keywords.vue";
+import Folders from "page/folders.vue";
 import Labels from "page/labels.vue";
 import People from "page/people.vue";
 import Library from "page/library.vue";
@@ -228,9 +229,8 @@ export default [
   {
     name: "folders",
     path: "/folders",
-    component: Albums,
+    component: Folders,
     meta: { title: $gettext("Folders"), requiresAuth: true },
-    props: { view: "folder", defaultOrder: "name", defaultReverse: true, staticFilter: { type: "folder" } },
   },
   {
     name: "folder",

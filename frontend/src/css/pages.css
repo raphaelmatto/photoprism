@@ -117,3 +117,54 @@
 .p-page-keywords .keywords-list-item:hover {
     text-decoration: underline;
 }
+
+/* Keyword tree: recursive hierarchy with collapsible branches. */
+.p-page-keywords .keywords-tree {
+    display: flex;
+    flex-direction: column;
+}
+
+.p-page-keywords .keyword-tree__row {
+    display: flex;
+    align-items: center;
+    padding: 2px 0;
+    gap: 4px;
+}
+
+.p-page-keywords .keyword-tree__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: inherit;
+    flex: 0 0 24px;
+}
+
+.p-page-keywords .keyword-tree__toggle--placeholder {
+    cursor: default;
+}
+
+.p-page-keywords .keyword-tree__toggle i {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.p-page-keywords .keyword-tree__label {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: inherit;
+    text-align: left;
+    line-height: 1.5;
+}
+
+.p-page-keywords .keyword-tree__label:hover {
+    text-decoration: underline;
+}

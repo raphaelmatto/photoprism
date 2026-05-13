@@ -8,4 +8,5 @@ type DisplaySettings struct {
 	RetinaLightbox   bool                   `json:"retinaLightbox" yaml:"RetinaLightbox"`
 	RetinaThumbnails bool                   `json:"retinaThumbnails" yaml:"RetinaThumbnails"`
 	Metadata         MetadataLayoutSettings `json:"metadata" yaml:"Metadata"`
+	Filters          FilterSettings         `json:"filters" yaml:"Filters"`
 }

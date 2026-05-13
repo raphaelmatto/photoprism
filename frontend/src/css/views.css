@@ -659,7 +659,10 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: pre-wrap;
+    /* pre-line collapses leading/repeated whitespace (so a stray space
+       between the omitted icon and the caption text doesn't visually indent
+       the first line) while still preserving author-entered line breaks. */
+    white-space: pre-line;
 }
 
 .cards-view .result .meta .meta-details button {
@@ -732,7 +735,8 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: pre-wrap;
+    /* pre-line: collapse leading/repeated whitespace; preserve line breaks. */
+    white-space: pre-line;
 }
 
 .is-rtl .cards-view .result .meta .meta-details button {

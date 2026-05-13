@@ -90,12 +90,24 @@ func TestBuildQuerySQL(t *testing.T) {
 		assert.Equal(t, []interface{}{"dog", "dog%", "dog%"}, c.args)
 	})
 
-	t.Run("Phrase", func(t *testing.T) {
+	t.Run("MultiWordPhrase", func(t *testing.T) {
 		c := buildQuerySQL(parseQuery(`"Family reunion"`))
+		// Multi-word phrases match the exact keyword tag plus a substring in
+		// title and caption.
 		assert.Contains(t, c.sql, "LOWER(k.keyword) = ?")
 		assert.Contains(t, c.sql, "LOWER(photos.photo_title) LIKE ?")
 		assert.Contains(t, c.sql, "LOWER(photos.photo_caption) LIKE ?")
 		assert.Equal(t, []interface{}{"family reunion", "%family reunion%", "%family reunion%"}, c.args)
+	})
+
+	t.Run("SingleTokenPhraseExactTagOnly", func(t *testing.T) {
+		c := buildQuerySQL(parseQuery(`"Ai"`))
+		// Single-token phrases must not pull in title/caption substring matches:
+		// "Ai" should not match captions containing "Gail" or "Paris".
+		assert.Contains(t, c.sql, "LOWER(k.keyword) = ?")
+		assert.NotContains(t, c.sql, "photo_title")
+		assert.NotContains(t, c.sql, "photo_caption")
+		assert.Equal(t, []interface{}{"ai"}, c.args)
 	})
 
 	t.Run("AndBindsTighterThanOr", func(t *testing.T) {

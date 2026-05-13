@@ -100,6 +100,7 @@ func NewSettings(theme, language, timeZone string) *Settings {
 			RetinaLightbox:   false,
 			RetinaThumbnails: false,
 			Metadata:         NewMetadataLayoutSettings(),
+			Filters:          NewFilterSettings(),
 		},
 		Templates: TemplateSettings{
 			Default: "index.gohtml",
@@ -145,6 +146,34 @@ func (s *Settings) Propagate() {
 
 	if s.Display.LightboxBorder < 0 {
 		s.Display.LightboxBorder = 0
+	}
+
+	// Fill in nil filter visibility pointers with the default (visible) so
+	// existing settings.yml files without a Filters section keep working.
+	defaultFilters := NewFilterSettings()
+	if s.Display.Filters.Country == nil {
+		s.Display.Filters.Country = defaultFilters.Country
+	}
+	if s.Display.Filters.Camera == nil {
+		s.Display.Filters.Camera = defaultFilters.Camera
+	}
+	if s.Display.Filters.View == nil {
+		s.Display.Filters.View = defaultFilters.View
+	}
+	if s.Display.Filters.Order == nil {
+		s.Display.Filters.Order = defaultFilters.Order
+	}
+	if s.Display.Filters.Year == nil {
+		s.Display.Filters.Year = defaultFilters.Year
+	}
+	if s.Display.Filters.Month == nil {
+		s.Display.Filters.Month = defaultFilters.Month
+	}
+	if s.Display.Filters.Color == nil {
+		s.Display.Filters.Color = defaultFilters.Color
+	}
+	if s.Display.Filters.Category == nil {
+		s.Display.Filters.Category = defaultFilters.Category
 	}
 
 	i18n.SetLocale(s.UI.Language)

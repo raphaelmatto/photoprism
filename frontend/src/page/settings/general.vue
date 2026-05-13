@@ -413,6 +413,34 @@
           </v-row>
         </v-card-actions>
       </v-card>
+
+      <v-card flat tile class="mt-0 px-1 bg-background">
+        <v-card-title class="pb-2 text-subtitle-2">
+          {{ $gettext(`Filters`) }}
+        </v-card-title>
+        <v-card-subtitle class="pb-2 text-caption opacity-80">
+          {{ $gettext(`Show or hide individual filter dropdowns in the photo search toolbar.`) }}
+        </v-card-subtitle>
+
+        <v-card-actions>
+          <v-row align="start" dense>
+            <v-col v-for="filter in toolbarFilters" :key="filter.key" cols="12" sm="6" lg="3" class="px-2 pb-2 pt-2">
+              <v-checkbox
+                v-model="settings.display.filters[filter.key]"
+                :disabled="busy"
+                class="ma-0 pa-0"
+                :class="`input-filter-${filter.key}`"
+                density="compact"
+                :label="filter.label"
+                :prepend-icon="filter.icon"
+                hide-details
+                @update:model-value="onChange"
+              >
+              </v-checkbox>
+            </v-col>
+          </v-row>
+        </v-card-actions>
+      </v-card>
     </v-form>
     <p-about-footer></p-about-footer>
     <p-confirm-sponsor :visible="dialog.sponsor" @close="dialog.sponsor = false"></p-confirm-sponsor>
@@ -450,6 +478,18 @@ export default {
       mapsStyle: options.MapsStyle(this.$config.get("experimental")),
       currentMapsStyle: this.$config.getSettings().maps.style,
       languages: options.Languages(),
+      // Photo search toolbar filters that the user can show or hide. Order
+      // here also drives the order of the checkbox rows in the Filters card.
+      toolbarFilters: [
+        { key: "country", label: this.$gettext("Country"), icon: "mdi-flag-outline" },
+        { key: "camera", label: this.$gettext("Camera"), icon: "mdi-camera-outline" },
+        { key: "view", label: this.$gettext("View"), icon: "mdi-view-grid-outline" },
+        { key: "order", label: this.$gettext("Sort Order"), icon: "mdi-sort" },
+        { key: "year", label: this.$gettext("Year"), icon: "mdi-calendar-blank-outline" },
+        { key: "month", label: this.$gettext("Month"), icon: "mdi-calendar-month-outline" },
+        { key: "color", label: this.$gettext("Color"), icon: "mdi-palette-outline" },
+        { key: "category", label: this.$gettext("Category"), icon: "mdi-tag-outline" },
+      ],
       dialog: {
         sponsor: false,
       },
