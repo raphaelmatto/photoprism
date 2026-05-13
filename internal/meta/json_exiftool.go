@@ -225,9 +225,21 @@ func (data *Data) Exiftool(jsonData []byte, originalName string) (err error) {
 
 	hasTimeOffset := false
 
-	// Has Media Create Date?
+	// Reconcile TakenAt with CreatedAt: when both are present, the historical
+	// behavior is to prefer CreatedAt (which carries sub-second precision
+	// from SubSecCreateDate on many cameras). Skip that overwrite when the
+	// two represent clearly different moments — e.g. Lightroom updates
+	// DateTimeOriginal when the user changes a photo's capture date but
+	// leaves CreateDate frozen at the file's original digital-creation
+	// timestamp, which can be years off and would otherwise clobber the
+	// correct date. The 27-hour threshold mirrors the plausibility check a
+	// few lines below; anything larger is treated as stale metadata.
 	if !data.CreatedAt.IsZero() {
-		data.TakenAt = data.CreatedAt
+		if data.TakenAt.IsZero() {
+			data.TakenAt = data.CreatedAt
+		} else if delta := data.CreatedAt.Sub(data.TakenAt).Abs(); delta <= time.Hour*27 {
+			data.TakenAt = data.CreatedAt
+		}
 	}
 
 	// Fallback to GPS UTC Time?
