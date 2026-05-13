@@ -1070,7 +1070,7 @@ body.mobile .face-results.cards-view {
 }
 
 .column-view .column-photo {
-    display: table;
+    display: block;
     margin: 0 auto;
 }
 

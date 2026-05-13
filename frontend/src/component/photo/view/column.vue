@@ -23,7 +23,7 @@
         :class="photo.classes()"
         @contextmenu.stop="onContextMenu($event, index)"
       >
-        <div class="column-photo">
+        <div class="column-photo" :style="columnPhotoStyle(photo)">
           <div
             class="column-image"
             @touchstart.passive="input.touchStart($event, index)"
@@ -157,6 +157,16 @@ export default {
         height: Math.round(source.h / dpr),
         alt: photo.Title,
       };
+    },
+    // Cap the wrapper at the image's natural width so a long description does
+    // not expand the framed container past the image. The wrapper still
+    // narrows on smaller viewports because max-width yields to available space.
+    columnPhotoStyle(photo) {
+      const info = this.thumbInfo(photo);
+      if (!info?.width) {
+        return null;
+      }
+      return { maxWidth: `${info.width}px` };
     },
     columnMetadataItems(photo) {
       return this.columnLayout

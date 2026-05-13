@@ -103,7 +103,7 @@
             </button>
           </div>
 
-          <div class="meta">
+          <div v-if="rowItem.width >= minMetaWidth" class="meta">
             <div class="meta-details meta-fields">
               <component
                 :is="item.clickable ? 'button' : 'div'"
@@ -359,6 +359,13 @@ export default {
   computed: {
     cardLayout() {
       return metadataLayout(this.$config.getSettings(), MetadataView.Cards);
+    },
+    // Hide all card metadata when the packed card is too narrow for a date
+    // string like "Feb 14, 1942" to fit on one line. Below this threshold the
+    // date wraps mid-string (and longer fields fragment into single columns of
+    // letters), which is harder to read than nothing.
+    minMetaWidth() {
+      return 150;
     },
   },
   beforeCreate() {
