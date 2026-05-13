@@ -70,7 +70,7 @@ func GetThumb(router *gin.RouterGroup) {
 			}
 
 			// Add HTTP cache header.
-			AddImmutableCacheHeader(c)
+			AddThumbCacheHeader(c)
 
 			if attachment {
 				c.FileAttachment(fileName, cropName.Jpeg())
@@ -101,7 +101,7 @@ func GetThumb(router *gin.RouterGroup) {
 				return
 			}
 
-			AddImmutableCacheHeader(c)
+			AddThumbCacheHeader(c)
 			c.File(fileName)
 			return
 		}
@@ -139,7 +139,7 @@ func GetThumb(router *gin.RouterGroup) {
 			}
 
 			// Add HTTP cache header.
-			AddImmutableCacheHeader(c)
+			AddThumbCacheHeader(c)
 
 			if attachment {
 				c.FileAttachment(cached.FileName, cached.ShareName)
@@ -154,7 +154,7 @@ func GetThumb(router *gin.RouterGroup) {
 		if !attachment {
 			if fileName, err := size.ResolvedName(fileHash, conf.ThumbCachePath()); err == nil {
 				// Add HTTP cache header.
-				AddImmutableCacheHeader(c)
+				AddThumbCacheHeader(c)
 
 				// Return requested content.
 				c.File(fileName)
@@ -215,7 +215,7 @@ func GetThumb(router *gin.RouterGroup) {
 			log.Debugf("%s: using original, size exceeds limit (width %d, height %d)", logPrefix, size.Width, size.Height)
 
 			// Add HTTP cache header.
-			AddImmutableCacheHeader(c)
+			AddThumbCacheHeader(c)
 
 			// Return requested content.
 			c.File(fileName)
@@ -248,7 +248,7 @@ func GetThumb(router *gin.RouterGroup) {
 		log.Debugf("cached %s [%s]", cacheKey, time.Since(start))
 
 		// Add HTTP cache header.
-		AddImmutableCacheHeader(c)
+		AddThumbCacheHeader(c)
 
 		// Return requested content.
 		if attachment {

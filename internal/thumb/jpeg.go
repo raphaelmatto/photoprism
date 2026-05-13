@@ -44,8 +44,9 @@ func Jpeg(srcFile, jpgFile string, orientation int) (img image.Image, err error)
 	// Get JPEG quality setting.
 	quality := JpegQualityDefault.EncodeOption()
 
-	// Save JPEG file.
-	if err = imaging.Save(img, jpgFile, quality); err != nil {
+	// Save JPEG file atomically so concurrent HTTP readers can never observe
+	// a partially-written thumbnail during reindexing.
+	if err = saveAtomicImage(img, jpgFile, quality); err != nil {
 		log.Errorf("jpeg: failed to save %s", clean.Log(filepath.Base(jpgFile)))
 		return img, err
 	}

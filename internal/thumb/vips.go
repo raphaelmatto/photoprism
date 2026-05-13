@@ -2,7 +2,6 @@ package thumb
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/davidbyttow/govips/v2/vips"
@@ -110,8 +109,9 @@ func Vips(imageName string, imageBuffer []byte, hash, thumbPath string, width, h
 		return "", thumbBuffer, err
 	}
 
-	// Write thumbnail to file.
-	if err = os.WriteFile(thumbName, thumbBuffer, fs.ModeFile); err != nil {
+	// Write thumbnail to file atomically so concurrent HTTP readers can never
+	// observe a partially-written thumbnail during reindexing.
+	if err = writeAtomic(thumbName, thumbBuffer); err != nil {
 		log.Debugf("vips: %s in %s (write thumbnail to file)", err, clean.Log(filepath.Base(imageName)))
 		return "", thumbBuffer, err
 	}

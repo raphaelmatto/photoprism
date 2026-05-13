@@ -42,8 +42,9 @@ func Png(srcFile, pngFile string, orientation int) (img image.Image, err error) 
 		img = Rotate(img, orientation)
 	}
 
-	// Save PNG file.
-	if err = imaging.Save(img, pngFile, imaging.PNGCompressionLevel(png.BestCompression)); err != nil {
+	// Save PNG file atomically so concurrent HTTP readers can never observe
+	// a partially-written thumbnail during reindexing.
+	if err = saveAtomicImage(img, pngFile, imaging.PNGCompressionLevel(png.BestCompression)); err != nil {
 		log.Errorf("png: failed to save %s", clean.Log(filepath.Base(pngFile)))
 		return img, err
 	}

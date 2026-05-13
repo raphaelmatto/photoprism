@@ -142,7 +142,9 @@ func Create(img image.Image, fileName string, width, height int, opts ...Resampl
 		quality = JpegQuality(width, height).EncodeOption()
 	}
 
-	err = imaging.Save(result, fileName, quality)
+	// Save thumbnail atomically so concurrent HTTP readers can never observe
+	// a partially-written file during reindexing.
+	err = saveAtomicImage(result, fileName, quality)
 
 	if err != nil {
 		log.Debugf("thumb: failed to save %s", clean.Log(filepath.Base(fileName)))

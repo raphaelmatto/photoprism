@@ -128,6 +128,17 @@ func AddImmutableCacheHeader(c *gin.Context) {
 	header.SetCacheControlImmutable(c, ttl.CacheDefault.Int(), thumb.CachePublic)
 }
 
+// AddThumbCacheHeader adds cache control headers for thumbnail responses
+// without the immutable directive. Thumbnail URLs reuse the source-file hash
+// rather than a content hash of the thumbnail itself, so the served bytes can
+// legitimately change (reindex, quality setting changes, libvips upgrade). The
+// immutable directive would let browsers cache an outdated or partially-
+// written thumbnail forever, so we drop it and let Last-Modified-based
+// revalidation handle staleness.
+func AddThumbCacheHeader(c *gin.Context) {
+	header.SetCacheControl(c, ttl.CacheDefault.Int(), thumb.CachePublic)
+}
+
 // AddVideoCacheHeader adds video cache control headers to the response.
 func AddVideoCacheHeader(c *gin.Context, cdn bool) {
 	header.SetCacheControlImmutable(c, ttl.CacheVideo.Int(), cdn || thumb.CachePublic)
