@@ -180,6 +180,22 @@
     white-space: normal;
 }
 
+.p-lightbox__container > .p-lightbox__sidebar .metadata__keyword-link {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.p-lightbox__container > .p-lightbox__sidebar .metadata__keyword-link:hover {
+    text-decoration: underline;
+}
+
 /* Media Content */
 
 .pswp__content {
@@ -464,13 +480,69 @@
 }
 
 .pswp__dynamic-caption .pswp__dynamic-caption-field {
+    position: relative;
+    padding-inline-start: 22px;
     white-space: normal;
     overflow-wrap: break-word;
     word-break: break-word;
+    /* The shared `.pswp__dynamic-caption div` rule below disables pointer
+       events so the caption strip doesn't swallow swipe gestures; we
+       re-enable them here for our captions so the inline click targets
+       (date/camera/lens/keywords) actually receive clicks. */
+    pointer-events: auto;
+    touch-action: auto;
+}
+
+.pswp__dynamic-caption .pswp__dynamic-caption-field > i.mdi {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    width: 18px;
+    font-size: 16px;
+    line-height: inherit;
+    font-style: normal;
+    font-weight: 400;
+    text-align: start;
+    -webkit-font-smoothing: antialiased;
+    pointer-events: none;
+}
+
+.pswp__dynamic-caption .pswp__dynamic-caption-field--title,
+.pswp__dynamic-caption .pswp__dynamic-caption-field--caption {
+    padding-inline-start: 0;
 }
 
 .pswp__dynamic-caption .pswp__dynamic-caption-field--caption {
     white-space: pre-wrap;
+}
+
+/* Strip default button chrome from inline click targets (per-keyword
+   buttons) so they read as inline text. Note: padding is intentionally
+   left to the surrounding field so the icon gutter is preserved. */
+.pswp__dynamic-caption .pswp__dynamic-caption-field--clickable {
+    display: inline;
+    margin: 0;
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: auto;
+}
+
+/* Whole-row click targets (date, camera, lens) keep block layout and the
+   icon gutter so they line up with non-clickable rows. */
+button.pswp__dynamic-caption-field.pswp__dynamic-caption-field--clickable {
+    display: block;
+    width: 100%;
+    padding-block: 0;
+    padding-inline-end: 0;
+}
+
+.pswp__dynamic-caption .pswp__dynamic-caption-field--clickable:hover {
+    text-decoration: underline;
 }
 
 .pswp__dynamic-caption p {

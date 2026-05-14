@@ -77,7 +77,7 @@
         </div>
       </div>
       <div v-if="info" ref="sidebar" tabindex="-1" class="p-lightbox__sidebar bg-surface">
-        <p-sidebar-info v-model="model" :collection="collection" :context="context" @close="hideInfo"></p-sidebar-info>
+        <p-sidebar-info v-model="model" :collection="collection" :context="context" @close="hideInfo" @search="onInfoSearch"></p-sidebar-info>
       </div>
     </div>
     <p-lightbox-menu
@@ -97,7 +97,7 @@ import Lightbox from "photoswipe/lightbox";
 import Captions from "common/captions";
 import $api from "common/api";
 import $fullscreen from "common/fullscreen";
-import { hasMetadataText, metadataLayout, metadataText, MetadataView } from "common/metadata";
+import { hasMetadataText, keywordsList, metadataIcon, metadataLayout, metadataText, MetadataView } from "common/metadata";
 import Thumb from "model/thumb";
 import Collection from "model/collection";
 import { Photo } from "model/photo";
@@ -1606,17 +1606,75 @@ export default {
             fieldId,
             index,
             text: metadataText(model, fieldId),
+            icon: metadataIcon(fieldId, model),
+            search: this.captionSearchQuery(model, fieldId),
+            keywords: fieldId === "keywords" ? keywordsList(model) : null,
           };
         })
         .filter(Boolean);
 
+      // Build caption HTML directly without sanitization: every interpolated
+      // value either comes from a controlled source (the layout's fixed
+      // field IDs, our own captionSearchQuery() format, the static MDI
+      // icon allowlist) or is passed through encodeHTML first. Routing
+      // through sanitize-html strips the field classes, icon <i>, and the
+      // <button> used for clickable fields, breaking both styling and the
+      // click target.
       let caption = "";
-
       for (const field of fields) {
-        caption += `<div class="pswp__dynamic-caption-field pswp__dynamic-caption-field--${field.fieldId}">${this.$util.encodeHTML(field.text)}</div>`;
-      }
+        const safeText = this.$util.encodeHTML(field.text);
+        const fieldClass = `pswp__dynamic-caption-field pswp__dynamic-caption-field--${field.fieldId}`;
+        const showIcon = !["title", "caption"].includes(field.fieldId);
+        const iconHtml = showIcon && field.icon ? `<i class="mdi ${field.icon}"></i>` : "";
 
-      return this.$util.sanitizeHtml(caption);
+        if (field.fieldId === "keywords" && Array.isArray(field.keywords) && field.keywords.length > 0) {
+          // Each keyword renders as its own button so the user can click an
+          // individual tag, matching the Cards/Scroll views.
+          let body = "";
+          field.keywords.forEach((kw, kwIndex) => {
+            const safeKw = this.$util.encodeHTML(kw);
+            const safeQuery = this.$util.encodeHTML(`"${kw}"`);
+            if (kwIndex > 0) {
+              body += ", ";
+            }
+            body += `<button type="button" class="pswp__dynamic-caption-field--clickable" data-action="search" data-query="${safeQuery}">${safeKw}</button>`;
+          });
+          caption += `<div class="${fieldClass}">${iconHtml}${body}</div>`;
+          continue;
+        }
+
+        if (field.search) {
+          const safeQuery = this.$util.encodeHTML(field.search);
+          caption += `<button type="button" class="${fieldClass} pswp__dynamic-caption-field--clickable" data-action="search" data-query="${safeQuery}">${iconHtml}${safeText}</button>`;
+        } else {
+          caption += `<div class="${fieldClass}">${iconHtml}${safeText}</div>`;
+        }
+      }
+      return caption;
+    },
+    // captionSearchQuery returns a `q` string for the caption field, or ""
+    // when the field is not click-to-search. Keeps caption clickability in
+    // sync with the Information sidebar.
+    captionSearchQuery(model, fieldId) {
+      switch (fieldId) {
+        case "date": {
+          const takenAt = typeof model?.TakenAt === "string" ? model.TakenAt : "";
+          if (takenAt.length < 10) {
+            return "";
+          }
+          return `taken:${takenAt.substring(0, 10)}`;
+        }
+        case "camera": {
+          const id = model?.CameraID;
+          return Number.isFinite(id) && id > 0 ? `camera:${id}` : "";
+        }
+        case "lens": {
+          const id = model?.LensID;
+          return Number.isFinite(id) && id > 0 ? `lens:${id}` : "";
+        }
+        default:
+          return "";
+      }
     },
     // Removes any event listeners before the lightbox is fully closed.
     onClose() {
@@ -1826,6 +1884,12 @@ export default {
       }
 
       if (target.closest(".pswp__dynamic-caption")) {
+        // Caption taps default to toggling the PhotoSwipe controls; swallow
+        // them so the caption strip feels like static UI. The actual click
+        // routing for data-action="search" is handled via the native click
+        // event in captureDialogClick — preventDefault'ing here would also
+        // stop PhotoSwipe's pointerDown processing and the subsequent
+        // pointerUp/native click would never fire.
         ev.preventDefault();
       }
     },
@@ -1865,6 +1929,25 @@ export default {
 
       if (this.debug) {
         this.log(`dialog.capture.${ev.type}`, { ev, target: ev.target });
+      }
+
+      // Caption fields tagged with data-action="search" navigate the
+      // library to the photos sharing this attribute (Date/Camera/Lens
+      // and per-keyword tags). PhotoSwipe swallows its synthetic pointer
+      // events on the caption strip, so we route via the native click
+      // event instead — the click still fires because we only mark the
+      // PhotoSwipeEvent as defaultPrevented, not the underlying DOM event.
+      if (ev.target instanceof Element) {
+        const searchTarget = ev.target.closest('[data-action="search"]');
+        if (searchTarget) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          const query = searchTarget.getAttribute("data-query") || "";
+          if (query) {
+            this.onInfoSearch(query);
+          }
+          return;
+        }
       }
 
       // Reveal the controls when the user clicks or touches the top of the screen,
@@ -2611,6 +2694,20 @@ export default {
       } else {
         this.showInfo();
       }
+    },
+    // Closes the lightbox and navigates to /browse with the search query
+    // emitted by the info sidebar (or the caption-under-photo). The promise
+    // returned by close() resolves after the closing animation, so the route
+    // change feels intentional rather than racing the dismiss.
+    onInfoSearch(query) {
+      const q = typeof query === "string" ? query.trim() : "";
+      if (!q) {
+        return;
+      }
+
+      this.close().then(() => {
+        this.$router.push({ name: "all", query: { q } });
+      });
     },
     // Shows the lightbox sidebar, if hidden.
     showInfo() {

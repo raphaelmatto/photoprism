@@ -747,6 +747,26 @@
     padding: 0 17px 0 0;
 }
 
+/* Inline per-keyword buttons inside the keywords meta row. The outer
+   meta-field div already supplies the icon column; each keyword renders
+   as a plain inline button so they read as comma-separated values. */
+.cards-view .result .meta .meta-details .meta-keyword-link,
+.column-view .column-meta .meta-details .meta-keyword-link {
+    display: inline;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.cards-view .result .meta .meta-details .meta-keyword-link:hover,
+.column-view .column-meta .meta-details .meta-keyword-link:hover {
+    text-decoration: underline;
+}
+
 .cards-view .result.placeholder .meta i {
     width: 14px;
 }

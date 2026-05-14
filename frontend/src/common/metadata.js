@@ -246,23 +246,35 @@ function stripKeywordParents(s) {
 }
 
 function keywordsValue(model) {
+  return keywordsList(model).join(", ");
+}
+
+// keywordsList returns the photo's keywords with parent prefixes stripped, in
+// the same order keywordsValue uses for its rendered text. Each entry is the
+// leaf segment, which is what the search field expects when wrapped in quotes.
+export function keywordsList(model) {
   const flat = stringValue(model?.DetailsKeywords);
   if (flat) {
-    return stripKeywordParents(flat);
+    return splitKeywordList(flat);
   }
 
   const nested = stringValue(model?.Details?.Keywords);
   if (nested) {
-    return stripKeywordParents(nested);
+    return splitKeywordList(nested);
   }
 
   if (Array.isArray(model?.Keywords)) {
-    return model.Keywords.map((keyword) => stripKeywordParent(stringValue(keyword?.Name || keyword?.Title || keyword)))
-      .filter(Boolean)
-      .join(", ");
+    return model.Keywords.map((keyword) => stripKeywordParent(stringValue(keyword?.Name || keyword?.Title || keyword))).filter(Boolean);
   }
 
-  return "";
+  return [];
+}
+
+function splitKeywordList(s) {
+  return s
+    .split(",")
+    .map((k) => stripKeywordParent(k.trim()))
+    .filter(Boolean);
 }
 
 function labelsValue(model) {

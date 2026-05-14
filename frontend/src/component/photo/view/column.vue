@@ -61,17 +61,24 @@
 
           <div class="column-meta">
             <div class="meta-details meta-fields">
-              <component
-                :is="item.clickable ? 'button' : 'div'"
-                v-for="item in columnMetadataItems(photo)"
-                :key="`${photo.ID}-${item.key}`"
-                :title="item.label"
-                :class="item.className"
-                @click.exact="onMetadataAction(item.action, index)"
-              >
-                <i v-if="item.icon" class="mdi" :class="item.icon" />
-                {{ item.text }}
-              </component>
+              <template v-for="item in columnMetadataItems(photo)" :key="`${photo.ID}-${item.key}`">
+                <div v-if="item.keywordsInteractive" :title="item.label" :class="item.className">
+                  <i v-if="item.icon" class="mdi" :class="item.icon" />
+                  <template v-for="(kw, kwIndex) in item.keywords" :key="`${photo.ID}-${item.key}-${kwIndex}`">
+                    <button type="button" class="meta-keyword-link clickable" @click.stop.prevent="openKeyword(kw)">{{ kw }}</button><span v-if="kwIndex < item.keywords.length - 1">, </span>
+                  </template>
+                </div>
+                <component
+                  :is="item.clickable ? 'button' : 'div'"
+                  v-else
+                  :title="item.label"
+                  :class="item.className"
+                  @click.exact="onMetadataAction(item.action, index)"
+                >
+                  <i v-if="item.icon" class="mdi" :class="item.icon" />
+                  {{ item.text }}
+                </component>
+              </template>
             </div>
           </div>
         </div>
@@ -81,7 +88,7 @@
 </template>
 
 <script>
-import { hasMetadataText, metadataIcon, metadataLabel, metadataLayout, metadataText, MetadataView } from "common/metadata";
+import { hasMetadataText, keywordsList, metadataIcon, metadataLabel, metadataLayout, metadataText, MetadataView } from "common/metadata";
 import { Input, InputInvalid, ClickShort, ClickLong } from "common/input";
 import Thumb from "model/thumb";
 import * as contexts from "options/contexts";
@@ -106,6 +113,10 @@ export default {
       default: () => {},
     },
     openLocation: {
+      type: Function,
+      default: () => {},
+    },
+    openKeyword: {
       type: Function,
       default: () => {},
     },
@@ -178,14 +189,18 @@ export default {
           }
 
           const action = this.metadataAction(fieldId);
+          const keywords = fieldId === "keywords" ? keywordsList(photo) : null;
 
           return {
             key: `${fieldId}-${index}`,
+            fieldId,
             label: metadataLabel(fieldId),
             text: metadataText(photo, fieldId),
             icon: metadataIcon(fieldId, photo),
-            clickable: action !== "",
-            className: this.metadataClass(fieldId, action !== ""),
+            clickable: action !== "" && action !== "keyword",
+            keywordsInteractive: action === "keyword" && Array.isArray(keywords) && keywords.length > 0,
+            keywords,
+            className: this.metadataClass(fieldId, action !== "" && action !== "keyword"),
             action,
           };
         })
@@ -197,6 +212,8 @@ export default {
           return "date";
         case "location":
           return "location";
+        case "keywords":
+          return this.isSharedView ? "open" : "keyword";
         case "filename":
           return this.isSharedView ? "open" : "files";
         case "camera":
@@ -206,7 +223,6 @@ export default {
           return this.isSharedView ? "open" : "details";
         case "title":
         case "caption":
-        case "keywords":
         default:
           return this.isSharedView ? "open" : "edit";
       }

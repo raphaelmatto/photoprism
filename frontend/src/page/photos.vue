@@ -55,6 +55,7 @@
         :edit-photo="editPhoto"
         :open-date="openDate"
         :open-location="openLocation"
+        :open-keyword="openKeyword"
         :is-shared-view="isShared"
       ></p-photo-view-column>
       <p-photo-view-cards
@@ -67,6 +68,7 @@
         :edit-photo="editPhoto"
         :open-date="openDate"
         :open-location="openLocation"
+        :open-keyword="openKeyword"
         :is-shared-view="isShared"
       ></p-photo-view-cards>
     </div>
@@ -458,16 +460,7 @@ export default {
         return;
       }
 
-      const takenDate = photo.TakenAt.substring(0, 10);
-
-      if (this.$isMobile) {
-        this.$router.push({ query: { q: "taken:" + takenDate } });
-      } else {
-        const routeUrl = this.$router.resolve({ name: "all", query: { q: "taken:" + takenDate } }).href;
-        if (routeUrl) {
-          this.$util.openUrl(routeUrl);
-        }
-      }
+      this.$router.push({ name: "all", query: { q: "taken:" + photo.TakenAt.substring(0, 10) } });
     },
     openLocation(index) {
       if (!this.hasPlaces || !this.canSearchPlaces) {
@@ -487,6 +480,14 @@ export default {
       } else {
         this.$notify.warn("unknown location");
       }
+    },
+    openKeyword(keyword) {
+      const value = typeof keyword === "string" ? keyword.trim() : "";
+      if (!value) {
+        return;
+      }
+
+      this.$router.push({ name: "all", query: { q: `"${value}"` } });
     },
     editPhoto(index, tab) {
       if (!this.canEdit) {

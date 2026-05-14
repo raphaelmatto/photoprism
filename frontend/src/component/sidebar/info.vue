@@ -6,20 +6,35 @@
     </v-toolbar>
     <div v-if="model.UID">
       <v-list nav slim tile density="compact" class="metadata__list mt-2">
-        <v-list-item
-          v-for="item in metadataItems"
-          :key="item.key"
-          :prepend-icon="item.icon"
-          class="metadata__item"
-          :class="{ clickable: item.clickable }"
-          @click.stop="onItemClick(item.action)"
-        >
-          <div class="metadata__body">
-            <div :class="item.className">
-              {{ item.text }}
+        <template v-for="item in metadataItems" :key="item.key">
+          <v-list-item
+            v-if="item.fieldId === 'keywords' && Array.isArray(item.keywords) && item.keywords.length > 0"
+            :prepend-icon="item.icon"
+            :ripple="false"
+            class="metadata__item metadata__item--keywords"
+          >
+            <div class="metadata__body">
+              <div :class="item.className">
+                <template v-for="(kw, kwIndex) in item.keywords" :key="`${item.key}-kw-${kwIndex}`">
+                  <button type="button" class="metadata__keyword-link clickable" @click.stop="onKeywordClick(kw)">{{ kw }}</button><span v-if="kwIndex < item.keywords.length - 1">, </span>
+                </template>
+              </div>
             </div>
-          </div>
-        </v-list-item>
+          </v-list-item>
+          <v-list-item
+            v-else
+            :prepend-icon="item.icon"
+            class="metadata__item"
+            :class="{ clickable: item.clickable }"
+            @click.stop="onItemClick(item.action)"
+          >
+            <div class="metadata__body">
+              <div :class="item.className">
+                {{ item.text }}
+              </div>
+            </div>
+          </v-list-item>
+        </template>
 
         <template v-if="locationModel.Lat && locationModel.Lng">
           <v-divider class="my-4"></v-divider>
@@ -41,7 +56,7 @@
 </template>
 
 <script>
-import { hasMetadataText, metadataIcon, metadataLabel, metadataLayout, metadataText, MetadataView } from "common/metadata";
+import { hasMetadataText, keywordsList, metadataIcon, metadataLabel, metadataLayout, metadataText, MetadataView } from "common/metadata";
 import PMap from "component/map.vue";
 import { Photo } from "model/photo";
 
@@ -64,7 +79,7 @@ export default {
       default: "",
     },
   },
-  emits: ["update:modelValue", "close"],
+  emits: ["update:modelValue", "close", "search"],
   data() {
     return {
       details: new Photo(this.modelValue),
@@ -107,14 +122,30 @@ export default {
             return null;
           }
 
+          const query = this.searchQuery(fieldId);
+          const keywords = fieldId === "keywords" ? keywordsList(this.model) : null;
+
+          let clickable = false;
+          let action = "";
+
+          if (fieldId === "location" && !!this.model?.Lat && !!this.model?.Lng) {
+            clickable = true;
+            action = "copy-location";
+          } else if (query) {
+            clickable = true;
+            action = `search:${query}`;
+          }
+
           return {
             key: `${fieldId}-${index}`,
+            fieldId,
             label: metadataLabel(fieldId),
             text: metadataText(this.model, fieldId),
             icon: metadataIcon(fieldId, this.model),
             className: this.itemClass(fieldId),
-            clickable: fieldId === "location" && !!this.model?.Lat && !!this.model?.Lng,
-            action: fieldId === "location" ? "copy-location" : "",
+            clickable,
+            action,
+            keywords,
           };
         })
         .filter(Boolean);
@@ -168,6 +199,45 @@ export default {
     onItemClick(action) {
       if (action === "copy-location" && this.model?.Lat && this.model?.Lng) {
         this.copyLocation();
+        return;
+      }
+
+      if (typeof action === "string" && action.startsWith("search:")) {
+        const query = action.slice("search:".length);
+        if (query) {
+          this.$emit("search", query);
+        }
+      }
+    },
+    onKeywordClick(keyword) {
+      const value = typeof keyword === "string" ? keyword.trim() : "";
+      if (!value) {
+        return;
+      }
+      this.$emit("search", `"${value}"`);
+    },
+    // searchQuery returns a `q` string that filters the library to photos
+    // sharing this field's value, or "" when the field is not searchable.
+    // Camera and lens use their numeric IDs for an exact match.
+    searchQuery(fieldId) {
+      switch (fieldId) {
+        case "date": {
+          const takenAt = typeof this.model?.TakenAt === "string" ? this.model.TakenAt : "";
+          if (takenAt.length < 10) {
+            return "";
+          }
+          return `taken:${takenAt.substring(0, 10)}`;
+        }
+        case "camera": {
+          const id = this.model?.CameraID;
+          return Number.isFinite(id) && id > 0 ? `camera:${id}` : "";
+        }
+        case "lens": {
+          const id = this.model?.LensID;
+          return Number.isFinite(id) && id > 0 ? `lens:${id}` : "";
+        }
+        default:
+          return "";
       }
     },
     copyLocation() {

@@ -40,6 +40,7 @@
         :edit-photo="editPhoto"
         :open-date="openDate"
         :open-location="openLocation"
+        :open-keyword="openKeyword"
         :is-shared-view="isShared"
       ></p-photo-view-column>
       <p-photo-view-list
@@ -66,6 +67,7 @@
         :edit-photo="editPhoto"
         :open-date="openDate"
         :open-location="openLocation"
+        :open-keyword="openKeyword"
         :is-shared-view="isShared"
       ></p-photo-view-cards>
     </div>
@@ -347,6 +349,14 @@ export default {
       } else if (this.uid) {
         this.$router.push({ name: "places_view", params: { s: this.uid }, query: { q: photo.CellID } });
       }
+    },
+    openKeyword(keyword) {
+      const value = typeof keyword === "string" ? keyword.trim() : "";
+      if (!value) {
+        return;
+      }
+
+      this.$router.push({ name: "all", query: { q: `"${value}"` } });
     },
     editPhoto(index, tab) {
       if (!this.canEdit) {
