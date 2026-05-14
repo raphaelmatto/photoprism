@@ -512,6 +512,7 @@ export default {
       toolbarFilters: [
         { key: "country", label: this.$gettext("Country"), icon: "mdi-flag-outline" },
         { key: "camera", label: this.$gettext("Camera"), icon: "mdi-camera-outline" },
+        { key: "lens", label: this.$gettext("Lens"), icon: "mdi-camera-iris" },
         { key: "view", label: this.$gettext("View"), icon: "mdi-view-grid-outline" },
         { key: "order", label: this.$gettext("Sort Order"), icon: "mdi-sort" },
         { key: "year", label: this.$gettext("Year"), icon: "mdi-calendar-blank-outline" },

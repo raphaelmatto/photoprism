@@ -318,20 +318,20 @@ export default {
       this.updateQuery({ reverse: !this.filter.reverse });
     },
     openDate(index) {
-      if (!this.canEdit) {
-        return this.openPhoto(index);
-      }
-
       const photo = this.results[index];
 
       if (!photo) {
         return;
       } else if (!photo.TakenAt || photo.TakenAt.length < 10) {
-        this.editPhoto(index);
+        if (this.canEdit) {
+          this.editPhoto(index);
+        } else {
+          this.openPhoto(index);
+        }
         return;
       }
 
-      this.$router.push({ query: { q: "taken:" + photo.TakenAt.substring(0, 10) } });
+      this.$router.push({ name: "all", query: { q: "taken:" + photo.TakenAt.substring(0, 10) } });
     },
     openLocation(index) {
       if (!this.hasPlaces) {

@@ -32,7 +32,7 @@ const (
 
 var (
 	DefaultOrderAlbum  = sortby.Oldest
-	DefaultOrderFolder = sortby.Added
+	DefaultOrderFolder = sortby.Oldest
 	DefaultOrderMoment = sortby.Oldest
 	DefaultOrderState  = sortby.Newest
 	DefaultOrderMonth  = sortby.Oldest

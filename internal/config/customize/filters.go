@@ -7,6 +7,7 @@ package customize
 type FilterSettings struct {
 	Country  *bool `json:"country" yaml:"Country,omitempty"`
 	Camera   *bool `json:"camera" yaml:"Camera,omitempty"`
+	Lens     *bool `json:"lens" yaml:"Lens,omitempty"`
 	View     *bool `json:"view" yaml:"View,omitempty"`
 	Order    *bool `json:"order" yaml:"Order,omitempty"`
 	Year     *bool `json:"year" yaml:"Year,omitempty"`
@@ -22,6 +23,7 @@ func NewFilterSettings() FilterSettings {
 	return FilterSettings{
 		Country:  newBool(true),
 		Camera:   newBool(true),
+		Lens:     newBool(true),
 		View:     newBool(true),
 		Order:    newBool(true),
 		Year:     newBool(true),

@@ -158,6 +158,9 @@ func (s *Settings) Propagate() {
 	if s.Display.Filters.Camera == nil {
 		s.Display.Filters.Camera = defaultFilters.Camera
 	}
+	if s.Display.Filters.Lens == nil {
+		s.Display.Filters.Lens = defaultFilters.Lens
+	}
 	if s.Display.Filters.View == nil {
 		s.Display.Filters.View = defaultFilters.View
 	}

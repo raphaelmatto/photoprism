@@ -85,6 +85,7 @@ export class Settings extends Model {
     const filterDefaults = {
       country: true,
       camera: true,
+      lens: true,
       view: true,
       order: true,
       year: true,

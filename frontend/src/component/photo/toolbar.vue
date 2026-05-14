@@ -145,6 +145,26 @@
                 >
                 </v-select>
               </v-col>
+              <v-col v-if="filterVisible('lens')" cols="12" sm="6" md="3" class="p-lens-select">
+                <v-select
+                  :model-value="filter.lens"
+                  :label="$gettext('Lens')"
+                  :menu-props="{ maxHeight: 346 }"
+                  single-line
+                  hide-details
+                  variant="solo-filled"
+                  :density="density"
+                  :items="lensOptions"
+                  item-title="Name"
+                  item-value="ID"
+                  @update:model-value="
+                    (v) => {
+                      onUpdate({ lens: v });
+                    }
+                  "
+                >
+                </v-select>
+              </v-col>
               <v-col v-if="filterVisible('view')" cols="12" sm="6" md="3" class="p-view-select">
                 <v-select
                   id="viewSelect"
@@ -386,6 +406,9 @@ export default {
     },
     cameraOptions() {
       return this.all.cameras.concat(this.config.cameras);
+    },
+    lensOptions() {
+      return this.all.lenses.concat(this.config.lenses || []);
     },
     categoryOptions() {
       return this.all.categories.concat(this.config.categories);

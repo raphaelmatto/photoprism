@@ -206,14 +206,25 @@
                 </v-list-item-title>
               </v-list-item>
 
-              <v-list-group>
+              <!-- Bookmark icon column with no chevron when the albums group has nothing to expand to. -->
+              <v-list-item
+                v-if="!navVisible.unsorted"
+                to="/albums"
+                variant="text"
+                class="nav-albums activator-parent"
+                :ripple="false"
+                @click.stop=""
+              >
+                <v-icon>mdi-bookmark</v-icon>
+              </v-list-item>
+              <v-list-group v-else>
                 <template #activator="{ props }">
                   <v-list-item v-bind="props" variant="text" class="nav-albums activator-parent" :ripple="false" @click.stop="">
                     <v-icon>mdi-bookmark</v-icon>
                   </v-list-item>
                 </template>
 
-                <v-list-item v-show="navVisible.unsorted" to="/unsorted" variant="text" class="nav-unsorted">
+                <v-list-item to="/unsorted" variant="text" class="nav-unsorted">
                   <v-list-item-title :class="`nav-menu-item menu-item`">
                     {{ $gettext(`Unsorted`) }}
                   </v-list-item-title>
