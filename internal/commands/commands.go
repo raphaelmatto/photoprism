@@ -55,6 +55,7 @@ var PhotoPrism = []*cli.Command{
 	StopCommand,
 	StatusCommand,
 	IndexCommand,
+	DumpEditsCommand,
 	FindCommand,
 	ImportCommand,
 	CopyCommand,

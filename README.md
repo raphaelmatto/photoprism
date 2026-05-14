@@ -14,6 +14,10 @@ Three new settings that work independently of each other:
 
 All settings take effect immediately without a server restart. They are stored in `settings.yml` under the `display` key.
 
+### `photoprism dump-edits` (CLI)
+
+New subcommand that lists every photo whose title, caption, taken-at, location, keywords, subject, notes, artist, or copyright has been manually edited in the web UI but not yet round-tripped back to the source file. Emits markdown by default or `--json` for tooling. See [Round-Tripping Edits to Lightroom](#round-tripping-edits-to-lightroom).
+
 ### ARM64 Docker Build
 
 Production images now build from the standard `docker/photoprism/questing/Dockerfile` on a native ARM64 GitHub Actions runner. An earlier custom ARM64 Dockerfile existed to work around broken TensorFlow headers in the deprecated `photoprism/develop:bookworm` base image, but that workaround was retired after switching to the supported `questing` base. See [upstream issue #5444](https://github.com/photoprism/photoprism/issues/5444).
@@ -184,6 +188,39 @@ git push origin develop
 ```
 
 When a new upstream change should also land in your deploy branch, merge or cherry-pick it from `develop` into `production` deliberately. Do not treat `develop` as the long-lived place where fork feature work accumulates.
+
+## Round-Tripping Edits to Lightroom
+
+PhotoPrism does not write XMP. When users edit captions/keywords/etc. in the web UI those edits live only in the PhotoPrism database — Lightroom (which reads XMP/IPTC) has no idea they exist. The `photoprism dump-edits` command bridges this gap: it lists every photo whose `*_src` column is `manual` or `batch`, so you can replay those edits in Lightroom and re-index from the resulting XMP.
+
+### Quickstart
+
+```bash
+# Run on the server, inside the photoprism container.
+docker exec photoprism-photoprism-1 photoprism dump-edits        > edits.md
+docker exec photoprism-photoprism-1 photoprism dump-edits --json > edits.json
+```
+
+Each photo block in `edits.md` lists the indexed path, the photo UID, the timestamp of the last edit, and every field that has been manually changed. Hierarchical keywords are formatted as `Parent > Child` so they map directly onto Lightroom Classic's keyword hierarchy. Lat/lng pairs render as `lat=…, lng=…`. The `--json` variant emits the same data structured for an LR-side script.
+
+Fields that don't map cleanly to XMP — favorite, private, archive, etc. — are intentionally **not** included; the manifest only surfaces edits that have a Lightroom-side representation.
+
+### Full Workflow
+
+1. **Dump.** `photoprism dump-edits > edits.md` — read the manifest, apply each block in Lightroom.
+2. **Lightroom.** Edit each photo, then **Metadata → Save Metadata to File** (⌘S). For RAW the edits land in a `.xmp` sidecar; for JPEG they're embedded.
+3. **Identify touched paths.** In Lightroom Classic, filter by **Metadata Status: Has been changed externally** to list the files whose XMP you just wrote.
+4. **Re-index.** Run `photoprism index --overwrite-meta <path>` scoped to the touched paths (or to the whole library if it's small). The flag tells PhotoPrism to overwrite previously-edited values from the file's metadata, which clears the `*_src='manual'` markers as a side effect.
+5. **Verify.** Re-run `photoprism dump-edits`. `No manually-edited photos found.` means everything round-tripped cleanly. Anything that still appears is an edit that didn't survive the round-trip — either Lightroom doesn't expose that field, or the value didn't actually make it into the XMP. Useful diagnostic.
+
+### Race-Condition Notes
+
+Between step 1 (dump) and step 4 (re-index) users may make more edits. Those new edits will also have `*_src='manual'` and the manifest from step 1 won't have captured them. Two options:
+
+- **Time-bound the cycle.** Stamp the manifest with the run time; only re-index files whose XMP `ModifyDate` is newer than that stamp. Step 3's "changed externally" filter already does this implicitly.
+- **Do it during low-traffic hours.** The site stays up during indexing; it's just slower.
+
+The visible data never changes across the cycle — re-indexing replays the same values, just now sourced from XMP rather than the DB.
 
 ## Recommended Server Settings
 
