@@ -12,9 +12,12 @@
         <i class="mdi" :class="expanded ? 'mdi-chevron-down' : 'mdi-chevron-right'" />
       </button>
       <span v-else class="keyword-tree__toggle keyword-tree__toggle--placeholder" aria-hidden="true"></span>
-      <button type="button" class="keyword-tree__label" @click="onBrowse">
+      <button v-if="!hasChildren" type="button" class="keyword-tree__label" @click="onBrowse">
         {{ node.name }}<span v-if="node.count > 0" class="keyword-tree__count"> ({{ node.count }})</span>
       </button>
+      <span v-else class="keyword-tree__label keyword-tree__label--parent">
+        {{ node.name }}<span v-if="node.count > 0" class="keyword-tree__count"> ({{ node.count }})</span>
+      </span>
     </div>
     <div v-if="expanded && hasChildren" class="keyword-tree__children">
       <keyword-tree-node

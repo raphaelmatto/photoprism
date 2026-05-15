@@ -142,6 +142,14 @@
     min-height: 0;
 }
 
+/* Top-align the prepend icon so it sits next to the first line of a
+   multi-line value (e.g. a long caption) instead of being vertically
+   centered against the whole wrapped block. Single-line rows are
+   unaffected since top and center coincide there. */
+.p-lightbox__container > .p-lightbox__sidebar .v-list.v-list--nav .metadata__item .v-list-item__prepend {
+    align-self: flex-start;
+}
+
 .p-lightbox__container > .p-lightbox__sidebar .meta-title {
     font-weight: 600;
     word-wrap: normal;

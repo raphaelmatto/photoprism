@@ -169,6 +169,24 @@
     text-decoration: underline;
 }
 
+/* Parent ("top level") keywords are categories, not searchable terms —
+   browsing them casts too broad a net, so they render as plain text. */
+.p-page-keywords .keyword-tree__label--parent {
+    cursor: default;
+}
+
+.p-page-keywords .keyword-tree__label--parent:hover {
+    text-decoration: none;
+}
+
+/* The Folders page shares the keyword tree styles (its root carries both
+   p-page-folders and p-page-keywords). Folder names aren't browse links,
+   so suppress the hover underline there. Declared after the keywords
+   rule so it wins by source order on the Folders page only. */
+.p-page-folders .keyword-tree__label:hover {
+    text-decoration: none;
+}
+
 .p-page-keywords .keyword-tree__count {
     opacity: 0.55;
     font-size: 0.85em;
