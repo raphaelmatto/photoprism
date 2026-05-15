@@ -137,7 +137,6 @@ export default {
       uid: uid,
       results: [],
       scrollDisabled: true,
-      scrollDistance: window.innerHeight * 4,
       batchSize: batchSize,
       offset: 0,
       page: 0,
@@ -164,7 +163,15 @@ export default {
       return this.selection.length > 0;
     },
     activeBatchSize: function () {
-      return this.settings.view === "scroll" ? 10 : this.batchSize;
+      return this.settings.view === "scroll" ? 4 : this.batchSize;
+    },
+    // Scroll view shows one large full-width image per row, so prefetching
+    // 4 viewports ahead floods Safari's ~6-connection limit and starves the
+    // images actually at the top. Keep a tight 1-viewport lookahead there;
+    // grid views pack many small tiles per screen and still want the wider
+    // lookahead for smooth infinite scroll.
+    scrollDistance: function () {
+      return this.settings.view === "scroll" ? window.innerHeight : window.innerHeight * 4;
     },
   },
   watch: {
