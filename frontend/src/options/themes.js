@@ -690,6 +690,7 @@ let themes = {
       "hover-opacity": 0.045,
       "focus-opacity": 0.06,
       "fill-opacity": 0,
+      "lightbox-frame-opacity": 0.6,
     },
   },
   vanta: {
