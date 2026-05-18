@@ -4,6 +4,7 @@ import * as contexts from "options/contexts";
 import { nextTick } from "vue";
 import PLightbox from "component/lightbox.vue";
 import Album from "model/album";
+import Photo from "model/photo";
 
 const defaultStubs = {
   "v-dialog": true,
@@ -127,6 +128,40 @@ describe("PLightbox (low-mock, jsdom-friendly)", () => {
     expect(album.setCover).toHaveBeenCalledWith(hash);
     expect(ctx.log).not.toHaveBeenCalled();
     expect(ctx.$notify.success).toHaveBeenCalledWith("Changes successfully saved");
+  });
+
+  it("downloads from the detailed photo download URL", async () => {
+    const wrapper = mountLightbox();
+    const detailedPhoto = new Photo({
+      UID: "ptew0y5i0re4pjte",
+      Hash: "5523095c3b3a69d41085e38d85d016aec4ad6c46",
+    });
+    detailedPhoto.DownloadUrl = "";
+    const downloadAll = vi.fn();
+    const find = vi.fn().mockResolvedValue({ downloadAll });
+
+    const ctx = {
+      canDownload: true,
+      model: detailedPhoto,
+      pauseSlideshow: vi.fn(),
+      log: vi.fn(),
+      $notify: {
+        success: vi.fn(),
+      },
+      $gettext: VTUConfig.global.mocks.$gettext,
+    };
+
+    const findSpy = vi.spyOn(Photo.prototype, "find").mockImplementation(find);
+
+    await wrapper.vm.$options.methods.onDownload.call(ctx);
+    await Promise.resolve();
+
+    expect(findSpy).toHaveBeenCalledWith("ptew0y5i0re4pjte");
+    expect(downloadAll).toHaveBeenCalled();
+    expect(ctx.log).not.toHaveBeenCalled();
+    expect(ctx.$notify.success).toHaveBeenCalledWith("Downloading…");
+
+    findSpy.mockRestore();
   });
 
   it("binds the active theme to the dialog and updates it on refresh", async () => {

@@ -2642,7 +2642,13 @@ export default {
               selection dialog so the user can choose which format and quality to download.
        */
 
-      if (!this.model || !this.model.DownloadUrl) {
+      const downloadUrl =
+        this.model?.DownloadUrl ||
+        (typeof this.model?.getDownloadUrl === "function" && typeof this.model?.fileHash === "function" && this.model.fileHash()
+          ? this.model.getDownloadUrl()
+          : "");
+
+      if (!downloadUrl) {
         this.log("viewer: no download url");
         return;
       }
