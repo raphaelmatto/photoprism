@@ -165,6 +165,11 @@ export default class Page {
     }
   }
 
+  async checkSortOptionsHidden() {
+    await t.click(Selector("i.mdi-tune"));
+    await t.expect(Selector(".p-sort-select").exists).notOk();
+  }
+
   getAlbumCardPreviewSelector(uid) {
     return Selector(`div.result.is-album[data-uid="${uid}"] .preview`);
   }

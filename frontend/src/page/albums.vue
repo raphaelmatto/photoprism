@@ -58,7 +58,7 @@
           <v-card v-show="expanded" flat color="secondary">
             <v-card-text class="dense">
               <v-row dense>
-                <v-col cols="12" sm="4" class="p-year-select">
+                <v-col cols="12" :sm="context === contexts.Album ? 6 : 4" class="p-year-select">
                   <v-select
                     :model-value="filter.year"
                     :label="$gettext('Year')"
@@ -79,7 +79,7 @@
                   >
                   </v-select>
                 </v-col>
-                <v-col cols="12" sm="4" class="p-category-select">
+                <v-col cols="12" :sm="context === contexts.Album ? 6 : 4" class="p-category-select">
                   <v-select
                     :model-value="filter.category"
                     :label="$gettext('Category')"
@@ -99,7 +99,7 @@
                   >
                   </v-select>
                 </v-col>
-                <v-col cols="12" sm="4" class="p-sort-select">
+                <v-col v-if="context !== contexts.Album" cols="12" sm="4" class="p-sort-select">
                   <v-select
                     :model-value="filter.order"
                     :label="$gettext('Sort Order')"
@@ -574,6 +574,10 @@ export default {
       };
     },
     sortOrder() {
+      if (this.staticFilter?.type === contexts.Album) {
+        return "name";
+      }
+
       const keys = this.sortStorageKeys();
       const queryParam = this.$route.query["order"];
       const storeOrder = window.localStorage.getItem(keys.order);
@@ -1075,6 +1079,10 @@ export default {
       };
 
       Object.assign(query, this.filter);
+
+      if (this.staticFilter?.type === contexts.Album) {
+        delete query.order;
+      }
 
       for (let key in query) {
         if (query[key] === undefined || !query[key]) {

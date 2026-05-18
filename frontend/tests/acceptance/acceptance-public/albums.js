@@ -338,9 +338,9 @@ test.meta("testID", "albums-007").meta({ type: "short", mode: "public" })("Commo
   await page.testCreateEditDeleteSharingLink("albums");
 });
 
-test.meta("testID", "albums-008").meta({ type: "short", mode: "public" })("Common: Verify album sort options", async (t) => {
+test.meta("testID", "albums-008").meta({ type: "short", mode: "public" })("Common: Hide album sort options", async (t) => {
   await menu.openPage("albums");
-  await album.checkSortOptions("album");
+  await album.checkSortOptionsHidden();
 });
 
 test.meta("testID", "albums-009").meta({ type: "short", mode: "public" })("Common: Set album cover from Albums Page", async (t) => {

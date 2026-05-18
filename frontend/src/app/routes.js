@@ -205,7 +205,7 @@ export default [
     path: "/albums",
     component: Albums,
     meta: { title: $gettext("Albums"), requiresAuth: true },
-    props: { view: "album", defaultOrder: "favorites", staticFilter: { type: "album" } },
+    props: { view: "album", defaultOrder: "name", staticFilter: { type: "album" } },
   },
   {
     name: "album",
