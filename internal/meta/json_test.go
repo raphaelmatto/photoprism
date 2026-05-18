@@ -2,6 +2,7 @@ package meta
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -287,6 +288,36 @@ func TestJSON(t *testing.T) {
 
 		assert.Equal(t, "2020-05-09 08:30:00 +0000 UTC", data.TakenAt.String())
 		assert.Equal(t, "2020-05-09 08:30:00 +0000 UTC", data.TakenAtLocal.String())
+	})
+	t.Run("CreateDatePreferredOverExistingModifyDate", func(t *testing.T) {
+		data := NewData()
+		data.TakenAt = time.Date(2026, 5, 15, 10, 49, 20, 0, time.UTC)
+		data.TakenAtLocal = data.TakenAt
+
+		err := data.Exiftool([]byte(`[{
+			"SourceFile": "lightroom.jpg",
+			"ExifToolVersion": 13.55,
+			"FileName": "lightroom.jpg",
+			"MIMEType": "image/jpeg",
+			"ModifyDate": "2026:05:15 10:49:20",
+			"CreateDate": "2020:05:10 20:12:23",
+			"OffsetTime": "-04:00",
+			"OffsetTimeDigitized": "-04:00",
+			"DigitalCreationDate": "2020:05:10",
+			"DigitalCreationTime": "20:12:23-04:00",
+			"MetadataDate": "2026:05:15 10:49:20-04:00",
+			"SubSecCreateDate": "2020:05:10 20:12:23-04:00",
+			"SubSecModifyDate": "2026:05:15 10:49:20-04:00",
+			"DigitalCreationDateTime": "2020:05:10 20:12:23-04:00"
+		}]`), "")
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, "UTC-4", data.TimeZone)
+		assert.Equal(t, "2020-05-11 00:12:23 +0000 UTC", data.TakenAt.String())
+		assert.Equal(t, "2020-05-10 20:12:23 +0000 UTC", data.TakenAtLocal.String())
 	})
 	t.Run("CanonEosSixDJson", func(t *testing.T) {
 		data, err := JSON("testdata/canon_eos_6d.json", "")

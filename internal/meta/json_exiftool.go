@@ -43,6 +43,23 @@ func hasImageCaptureDateTime(jsonValues map[string]gjson.Result, mimeType string
 	return false
 }
 
+// hasImageCreatedDate reports whether ExifTool JSON contains a still-image
+// creation timestamp that should be treated as the capture date when no more
+// explicit DateTimeOriginal value exists.
+func hasImageCreatedDate(jsonValues map[string]gjson.Result, mimeType string) bool {
+	if strings.HasPrefix(mimeType, "video/") {
+		return false
+	}
+
+	for _, name := range []string{"SubSecCreateDate", "CreateDate", "DigitalCreationDateTime"} {
+		if r, ok := jsonValues[name]; ok && !txt.Empty(r.String()) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // sameWallClockSecond reports whether the created and capture timestamps have
 // the same date and time fields once sub-second precision and offsets are ignored.
 func sameWallClockSecond(createdAt time.Time, candidates ...time.Time) bool {
@@ -268,6 +285,9 @@ func (data *Data) Exiftool(jsonData []byte, originalName string) (err error) {
 	if !data.CreatedAt.IsZero() {
 		if data.TakenAt.IsZero() {
 			data.TakenAt = data.CreatedAt
+		} else if hasImageCreatedDate(jsonValues, data.MimeType) && !hasImageCaptureDateTime(jsonValues, data.MimeType) {
+			data.TakenAt = data.CreatedAt
+			data.TakenAtLocal = data.CreatedAt
 		} else if hasImageCaptureDateTime(jsonValues, data.MimeType) && !sameWallClockSecond(data.CreatedAt, data.TakenAtLocal, data.TakenAt) {
 			// Keep the explicit capture timestamp.
 		} else if delta := data.CreatedAt.Sub(data.TakenAt).Abs(); delta <= time.Hour*27 {
