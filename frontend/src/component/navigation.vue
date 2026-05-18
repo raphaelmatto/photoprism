@@ -846,7 +846,7 @@ export default {
       featFiles: this.$config.feature("files"),
       featUsage: canSeeUsage && this.$config.values?.usage?.filesTotal,
       isRestricted: isRestricted,
-      isMini: localStorage.getItem("navigation.mode") !== "false" || isRestricted,
+      isMini: localStorage.getItem("navigation.mode") === "true" || isRestricted,
       isDemo: isDemo,
       isPro: isPro,
       isPublic: isPublic,

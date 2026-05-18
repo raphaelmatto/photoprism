@@ -141,6 +141,7 @@ function mountNavigation({
 
 describe("component/navigation", () => {
   afterEach(() => {
+    localStorage.removeItem("navigation.mode");
     vi.restoreAllMocks();
   });
 
@@ -181,6 +182,22 @@ describe("component/navigation", () => {
   });
 
   describe("drawer behavior", () => {
+    it("starts expanded when no navigation mode has been saved", () => {
+      localStorage.removeItem("navigation.mode");
+
+      const { wrapper } = mountNavigation({ isRestricted: false });
+
+      expect(wrapper.vm.isMini).toBe(false);
+    });
+
+    it("restores saved mini mode", () => {
+      localStorage.setItem("navigation.mode", "true");
+
+      const { wrapper } = mountNavigation({ isRestricted: false });
+
+      expect(wrapper.vm.isMini).toBe(true);
+    });
+
     it("toggleDrawer toggles drawer on small screens", () => {
       const { wrapper } = mountNavigation({
         vuetifyDisplay: { smAndDown: true },
@@ -205,6 +222,8 @@ describe("component/navigation", () => {
         vuetifyDisplay: { smAndDown: false },
         isRestricted: false,
       });
+
+      wrapper.vm.$vuetify.display.smAndDown = false;
 
       const initial = wrapper.vm.isMini;
       wrapper.vm.toggleDrawer({ target: {} });
