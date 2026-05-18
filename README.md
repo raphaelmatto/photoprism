@@ -207,6 +207,8 @@ Fields that don't map cleanly to XMP — favorite, private, archive, etc. — ar
 
 ### Full Workflow
 
+docker exec -it production-photoprism /bin/bash
+
 1. **Dump.** `photoprism dump-edits > edits.md` — read the manifest, apply each block in Lightroom.
 2. **Lightroom.** Edit each photo, then **Metadata → Save Metadata to File** (⌘S). For RAW the edits land in a `.xmp` sidecar; for JPEG they're embedded.
 3. **Identify touched paths.** In Lightroom Classic, filter by **Metadata Status: Has been changed externally** to list the files whose XMP you just wrote.
