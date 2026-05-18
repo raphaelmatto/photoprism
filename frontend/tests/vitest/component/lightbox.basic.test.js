@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as contexts from "options/contexts";
 import { nextTick } from "vue";
 import PLightbox from "component/lightbox.vue";
+import Album from "model/album";
 
 const defaultStubs = {
   "v-dialog": true,
@@ -98,6 +99,34 @@ describe("PLightbox (low-mock, jsdom-friendly)", () => {
     const download = actions.find((a) => a?.name === "download");
     expect(download).toBeTruthy();
     expect(download.visible).toBe(true);
+  });
+
+  it("sets a collection cover from the detailed photo file hash", async () => {
+    const wrapper = mountLightbox();
+    const hash = "bc2eb607c7a70a378d4393b5f24fc12574ea3a9a";
+    const album = new Album({ UID: "atezhkib1587p7fo" });
+    album.setCover = vi.fn().mockResolvedValue(album);
+
+    const ctx = {
+      canManageAlbums: true,
+      collection: album,
+      model: {
+        Hash: "",
+        fileHash: () => hash,
+      },
+      pauseSlideshow: vi.fn(),
+      log: vi.fn(),
+      $notify: {
+        success: vi.fn(),
+      },
+      $gettext: VTUConfig.global.mocks.$gettext,
+    };
+
+    await wrapper.vm.$options.methods.onSetCollectionCover.call(ctx);
+
+    expect(album.setCover).toHaveBeenCalledWith(hash);
+    expect(ctx.log).not.toHaveBeenCalled();
+    expect(ctx.$notify.success).toHaveBeenCalledWith("Changes successfully saved");
   });
 
   it("binds the active theme to the dialog and updates it on refresh", async () => {
@@ -224,7 +253,9 @@ describe("PLightbox (low-mock, jsdom-friendly)", () => {
     });
 
     expect(html).toContain("pswp__dynamic-caption-field--keywords");
-    expect(html).toContain("keyword-one, keyword-two");
+    expect(html).toContain("pswp__dynamic-caption-field--clickable");
+    expect(html).toContain("keyword-one");
+    expect(html).toContain("keyword-two");
     expect(html).toContain("Jan 11, 2026");
     expect(html).toContain("Test caption");
   });
@@ -325,6 +356,7 @@ describe("PLightbox (low-mock, jsdom-friendly)", () => {
     expect(wrapper.vm.$data.model.DetailsKeywords).toBe("keyword-one, keyword-two");
     expect(wrapper.vm.$data.model.Caption).toBe("Detailed caption");
     expect(activeModel).toBe(wrapper.vm.$data.model);
-    expect(html).toContain("keyword-one, keyword-two");
+    expect(html).toContain("keyword-one");
+    expect(html).toContain("keyword-two");
   });
 });

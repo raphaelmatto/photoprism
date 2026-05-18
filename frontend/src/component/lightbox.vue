@@ -2554,7 +2554,9 @@ export default {
 
       this.pauseSlideshow();
 
-      if (!this.model || !this.model.Hash) {
+      const hash = this.model?.Hash || (typeof this.model?.fileHash === "function" ? this.model.fileHash() : "");
+
+      if (!hash) {
         this.log("viewer: could not update collection cover because the file hash is missing");
         return;
       }
@@ -2564,7 +2566,7 @@ export default {
         return;
       }
 
-      this.collection.setCover(this.model.Hash).then(() => {
+      this.collection.setCover(hash).then(() => {
         this.$notify.success(this.$gettext("Changes successfully saved"));
       });
     },
