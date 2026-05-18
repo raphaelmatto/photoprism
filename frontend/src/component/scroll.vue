@@ -85,7 +85,7 @@ export default {
         }
 
         // Trigger this.loadMore() callback if within load distance (infinite scrolling).
-        if (document.documentElement.scrollHeight - scrollY < this.loadDistance) {
+        if (document.documentElement.scrollHeight - (scrollY + window.innerHeight) <= this.loadDistance) {
           this.onLoadMore();
         }
       } else if (scrollY < this.resetDistance) {

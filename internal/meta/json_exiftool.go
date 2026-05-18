@@ -27,6 +27,41 @@ const (
 	MimeQuicktime = "video/quicktime"
 )
 
+// hasImageCaptureDateTime reports whether ExifTool JSON contains an explicit
+// still-image capture timestamp that should outrank different creation dates.
+func hasImageCaptureDateTime(jsonValues map[string]gjson.Result, mimeType string) bool {
+	if strings.HasPrefix(mimeType, "video/") {
+		return false
+	}
+
+	for _, name := range []string{"SubSecDateTimeOriginal", "DateTimeOriginal"} {
+		if r, ok := jsonValues[name]; ok && !txt.Empty(r.String()) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// sameWallClockSecond reports whether the created and capture timestamps have
+// the same date and time fields once sub-second precision and offsets are ignored.
+func sameWallClockSecond(createdAt time.Time, candidates ...time.Time) bool {
+	if createdAt.IsZero() {
+		return false
+	}
+
+	const layout = "2006-01-02 15:04:05"
+	created := createdAt.Format(layout)
+
+	for _, candidate := range candidates {
+		if !candidate.IsZero() && candidate.Format(layout) == created {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Exiftool parses JSON sidecar data as created by Exiftool.
 func (data *Data) Exiftool(jsonData []byte, originalName string) (err error) {
 	defer func() {
@@ -225,18 +260,16 @@ func (data *Data) Exiftool(jsonData []byte, originalName string) (err error) {
 
 	hasTimeOffset := false
 
-	// Reconcile TakenAt with CreatedAt: when both are present, the historical
-	// behavior is to prefer CreatedAt (which carries sub-second precision
-	// from SubSecCreateDate on many cameras). Skip that overwrite when the
-	// two represent clearly different moments — e.g. Lightroom updates
-	// DateTimeOriginal when the user changes a photo's capture date but
-	// leaves CreateDate frozen at the file's original digital-creation
-	// timestamp, which can be years off and would otherwise clobber the
-	// correct date. The 27-hour threshold mirrors the plausibility check a
-	// few lines below; anything larger is treated as stale metadata.
+	// Reconcile TakenAt with CreatedAt: for still images, prefer explicit
+	// capture timestamps such as DateTimeOriginal over nearby but different
+	// metadata creation timestamps. Keep the historical CreatedAt preference
+	// when it has the same wall-clock value, as it can carry better precision
+	// or vendor-specific offset handling.
 	if !data.CreatedAt.IsZero() {
 		if data.TakenAt.IsZero() {
 			data.TakenAt = data.CreatedAt
+		} else if hasImageCaptureDateTime(jsonValues, data.MimeType) && !sameWallClockSecond(data.CreatedAt, data.TakenAtLocal, data.TakenAt) {
+			// Keep the explicit capture timestamp.
 		} else if delta := data.CreatedAt.Sub(data.TakenAt).Abs(); delta <= time.Hour*27 {
 			data.TakenAt = data.CreatedAt
 		}

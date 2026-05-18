@@ -268,6 +268,26 @@ func TestJSON(t *testing.T) {
 		assert.Equal(t, "HUAWEI P30 Rear Main Camera", data.LensModel)
 		assert.Equal(t, 1, data.Orientation)
 	})
+	t.Run("CaptureDatePreferredOverCreateDate", func(t *testing.T) {
+		data := NewData()
+
+		err := data.Exiftool([]byte(`[{
+			"SourceFile": "lightroom.jpg",
+			"ExifToolVersion": 12.76,
+			"FileName": "lightroom.jpg",
+			"MIMEType": "image/jpeg",
+			"CreateDate": "2020:05:10 12:00:00",
+			"MetadataDate": "2020:05:10 12:00:00",
+			"DateTimeOriginal": "2020:05:09 08:30:00"
+		}]`), "")
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, "2020-05-09 08:30:00 +0000 UTC", data.TakenAt.String())
+		assert.Equal(t, "2020-05-09 08:30:00 +0000 UTC", data.TakenAtLocal.String())
+	})
 	t.Run("CanonEosSixDJson", func(t *testing.T) {
 		data, err := JSON("testdata/canon_eos_6d.json", "")
 
@@ -879,9 +899,9 @@ func TestJSON(t *testing.T) {
 		// t.Logf("all: %+v", data.json)
 
 		assert.Equal(t, "Jens\r\tMander", data.Artist)
-		assert.Equal(t, "UTC+2", data.TimeZone)
-		assert.Equal(t, "2004-10-07 20:49:16 +0000 UTC", data.TakenAt.String())
-		assert.Equal(t, "2004-10-07 22:49:16 +0000 UTC", data.TakenAtLocal.String())
+		assert.Equal(t, "Local", data.TimeZone)
+		assert.Equal(t, "2004-09-23 10:57:57 +0000 UTC", data.TakenAt.String())
+		assert.Equal(t, "2004-09-23 10:57:57 +0000 UTC", data.TakenAtLocal.String())
 		assert.Equal(t, "This is the title", data.Title)
 		assert.Equal(t, "", data.Keywords.String())
 		assert.Equal(t, "This is a\n\ndescription!", data.Caption)
