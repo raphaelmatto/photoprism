@@ -147,4 +147,16 @@ var DialectSQLite3 = Migrations{
 		Stage:      "main",
 		Statements: []string{"UPDATE photos SET indexed_at = checked_at WHERE indexed_at IS NULL;"},
 	},
+	{
+		ID:         "20260416-000001",
+		Dialect:    "sqlite3",
+		Stage:      "main",
+		Statements: []string{"ALTER TABLE auth_users_settings ADD COLUMN display_metadata_cards TEXT;", "ALTER TABLE auth_users_settings ADD COLUMN display_metadata_list TEXT;", "ALTER TABLE auth_users_settings ADD COLUMN display_metadata_lightbox TEXT;"},
+	},
+	{
+		ID:         "20260825-000001",
+		Dialect:    "sqlite3",
+		Stage:      "main",
+		Statements: []string{"UPDATE albums\nSET album_order = 'oldest'\nWHERE album_type = 'folder'\n  AND (album_order = 'added' OR album_order = '' OR album_order IS NULL);"},
+	},
 }

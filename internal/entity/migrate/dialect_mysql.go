@@ -231,4 +231,16 @@ var DialectMySQL = Migrations{
 		Stage:      "main",
 		Statements: []string{"UPDATE photos SET indexed_at = checked_at WHERE indexed_at IS NULL;"},
 	},
+	{
+		ID:         "20260416-000001",
+		Dialect:    "mysql",
+		Stage:      "main",
+		Statements: []string{"ALTER TABLE auth_users_settings\n    ADD COLUMN IF NOT EXISTS display_metadata_cards TEXT NULL,\n    ADD COLUMN IF NOT EXISTS display_metadata_list TEXT NULL,\n    ADD COLUMN IF NOT EXISTS display_metadata_lightbox TEXT NULL;"},
+	},
+	{
+		ID:         "20260825-000001",
+		Dialect:    "mysql",
+		Stage:      "main",
+		Statements: []string{"UPDATE albums\nSET album_order = 'oldest'\nWHERE album_type = 'folder'\n  AND (album_order = 'added' OR album_order = '' OR album_order IS NULL);"},
+	},
 }

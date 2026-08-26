@@ -23,3 +23,27 @@ export function fromWireOrder(storedOrder) {
   if (storedOrder === "oldest") return { order: "date", reverse: true };
   return { order: storedOrder, reverse: null };
 }
+
+// Resolves reverse-sort state in precedence order: explicit URL direction,
+// legacy directional URL order, stored user preference, then model default.
+export function resolveReverse({ queryReverse, queryOrder, storedReverse, defaultOrder }) {
+  if (queryReverse === "true" || queryReverse === "false") {
+    return queryReverse === "true";
+  }
+
+  if (queryOrder) {
+    const query = fromWireOrder(queryOrder);
+    if (query.reverse !== null) return query.reverse;
+  }
+
+  if (storedReverse === "true" || storedReverse === "false") {
+    return storedReverse === "true";
+  }
+
+  if (defaultOrder) {
+    const fallback = fromWireOrder(defaultOrder);
+    if (fallback.reverse !== null) return fallback.reverse;
+  }
+
+  return false;
+}

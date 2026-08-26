@@ -42,6 +42,13 @@ func TestDialectMysql(t *testing.T) {
 	db.LogMode(false)
 	db.SetLogger(log)
 
+	if err = db.Exec("INSERT INTO albums (album_uid, album_type, album_order) VALUES (?, ?, ?), (?, ?, ?), (?, ?, ?)",
+		"atlegacyfolder000", "folder", "added",
+		"atnamedfolder0000", "folder", "name",
+		"atlegacyalbum0000", "album", "added").Error; err != nil {
+		t.Fatal(err)
+	}
+
 	opt := Opt(true, true, nil)
 
 	// Run pre-migrations.
@@ -63,5 +70,18 @@ func TestDialectMysql(t *testing.T) {
 		t.Error(err)
 	} else {
 		assert.Equal(t, 0, count)
+	}
+
+	orders := map[string]string{
+		"atlegacyfolder000": "oldest",
+		"atnamedfolder0000": "name",
+		"atlegacyalbum0000": "added",
+	}
+
+	for uid, expected := range orders {
+		var order string
+		row := db.Table("albums").Select("album_order").Where("album_uid = ?", uid).Row()
+		assert.NoError(t, row.Scan(&order))
+		assert.Equal(t, expected, order)
 	}
 }

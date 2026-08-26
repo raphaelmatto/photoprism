@@ -76,7 +76,7 @@
 
 <script>
 import { metadataViewRequiresDetails, MetadataView } from "common/metadata";
-import { fromWireOrder, toWireOrder } from "common/sort";
+import { fromWireOrder, resolveReverse, toWireOrder } from "common/sort";
 import { Photo } from "model/photo";
 import Album from "model/album";
 import Thumb from "model/thumb";
@@ -304,22 +304,15 @@ export default {
       const queryReverse = this.$route?.query["reverse"];
 
       if (queryReverse === "true" || queryReverse === "false") {
-        const val = queryReverse === "true";
-        window.localStorage.setItem("album.reverse", String(val));
-        return val;
+        window.localStorage.setItem("album.reverse", queryReverse);
       }
 
-      const stored = window.localStorage.getItem("album.reverse");
-      if (stored !== null) return stored === "true";
-
-      // A URL `order=oldest` carries an implicit reverse; honor it.
-      const rawOrder = this.$route?.query["order"];
-      if (rawOrder) {
-        const migrated = fromWireOrder(rawOrder);
-        if (migrated.reverse !== null) return migrated.reverse;
-      }
-
-      return false;
+      return resolveReverse({
+        queryReverse,
+        queryOrder: this.$route?.query["order"],
+        storedReverse: window.localStorage.getItem("album.reverse"),
+        defaultOrder: this.model?.Order,
+      });
     },
     toggleReverse() {
       this.updateQuery({ reverse: !this.filter.reverse });
@@ -669,6 +662,7 @@ export default {
         .find(this.uid)
         .then((m) => {
           this.model = m;
+          this.filter.reverse = this.sortReverse();
 
           window.document.title = `${this.$config.get("siteTitle")}: ${this.model.Title}`;
 

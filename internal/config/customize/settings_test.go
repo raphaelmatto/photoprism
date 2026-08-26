@@ -18,6 +18,7 @@ func TestNewSettings(t *testing.T) {
 		assert.Equal(t, DefaultMapsStyle, s.Maps.Style)
 		assert.NotNil(t, s.Index.AddAIKeywords)
 		assert.True(t, s.Index.AIKeywordsEnabled())
+		assert.Equal(t, "oldest", s.Albums.Order.Folder)
 		assert.Equal(t, 1.0, s.Display.LightboxBorder)
 		assert.Equal(t, []string{"caption", "date", "keywords"}, s.Display.Metadata.Cards)
 		assert.Equal(t, []string{"filename", "date", "camera", "lens", "exposure"}, s.Display.Metadata.List)
@@ -66,6 +67,7 @@ func TestSettings_Load(t *testing.T) {
 
 		assert.Equal(t, "onyx", s.UI.Theme)
 		assert.Equal(t, "de", s.UI.Language)
+		assert.Equal(t, "oldest", s.Albums.Order.Folder)
 		assert.Equal(t, 1.0, s.Display.LightboxBorder)
 	})
 	t.Run("NotExistingFilename", func(t *testing.T) {

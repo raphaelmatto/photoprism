@@ -24,7 +24,7 @@ func NewAlbumSettings() AlbumsSettings {
 	return AlbumsSettings{
 		Order: AlbumsOrder{
 			Album:  sortby.Oldest,
-			Folder: sortby.Added,
+			Folder: sortby.Oldest,
 			Moment: sortby.Oldest,
 			State:  sortby.Newest,
 			Month:  sortby.Oldest,

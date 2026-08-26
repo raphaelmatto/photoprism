@@ -276,7 +276,7 @@ func TestNewFolderAlbum(t *testing.T) {
 		assert.Equal(t, "Dogs", album.AlbumTitle)
 		assert.Equal(t, "dogs", album.AlbumSlug)
 		assert.Equal(t, AlbumFolder, album.AlbumType)
-		assert.Equal(t, sortby.Added, album.AlbumOrder)
+		assert.Equal(t, sortby.Oldest, album.AlbumOrder)
 		assert.Equal(t, "label:dog", album.AlbumFilter)
 	})
 	t.Run("TitleEmpty", func(t *testing.T) {

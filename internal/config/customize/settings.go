@@ -7,6 +7,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/photoprism/photoprism/internal/entity/sortby"
 	"github.com/photoprism/photoprism/pkg/clean"
 	"github.com/photoprism/photoprism/pkg/fs"
 	"github.com/photoprism/photoprism/pkg/i18n"
@@ -129,6 +130,11 @@ func (s *Settings) Propagate() {
 
 	if s.Maps.Style == "" {
 		s.Maps.Style = DefaultMapsStyle
+	}
+
+	// Migrate the legacy folder default so existing settings files use capture-date order.
+	if s.Albums.Order.Folder == "" || s.Albums.Order.Folder == sortby.Added {
+		s.Albums.Order.Folder = sortby.Oldest
 	}
 
 	defaultMetadata := NewMetadataLayoutSettings()
