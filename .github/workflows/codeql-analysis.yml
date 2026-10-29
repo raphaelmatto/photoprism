@@ -2,12 +2,24 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ develop, release, master ]
+    branches: [ production, develop, release, master ]
+  pull_request:
+    branches: [ production ]
+  workflow_dispatch:
 
 jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: photoprism/develop:261027-resolute
+    defaults:
+      run:
+        shell: bash
+    env:
+      GOMAXPROCS: 2
+      GOFLAGS: -p=2
     permissions:
       actions: read
       contents: read
@@ -16,16 +28,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'go', 'javascript' ]
+        include:
+          - language: go
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
+      with:
+        persist-credentials: false
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+
+    - name: Build Go Code for Analysis
+      if: matrix.language == 'go'
+      run: make build-go
 
     - name: CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v4

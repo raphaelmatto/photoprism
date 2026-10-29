@@ -196,7 +196,8 @@ Note: Across our public documentation, official images, and in production, the c
 - From within the Development Environment:
   - Full unit test suite: `make test` (runs backend and frontend tests)
   - Test frontend/backend: `make test-js` and `make test-go`
-  - Linting: `make lint` (all), `make lint-go` (golangci-lint with `.golangci.yml`, prints findings without failing due to `--issues-exit-code 0`), `make lint-js` (ESLint/Prettier)
+  - Linting: `make lint` (all), `make lint-go` (golangci-lint with `.golangci.yml`), `make lint-js` (ESLint/Prettier). These targets return a failure when the linter reports errors.
+  - Fork CI: `make test-ci-go` runs the focused backend suite for utilities, search, FFmpeg, and thumbnails. CI also compiles the backend and runs frontend unit tests with `make test-js VITEST_ARGS=--maxWorkers=2`. Full lint reports record existing debt; publishing blocks new Go findings and ESLint errors in changed frontend source files.
   - Go packages: `go test` (all tests) or `go test -run <name>` (specific tests only)
 - Need to inspect the MariaDB data while iterating? Connect directly inside the dev shell with `mariadb -D photoprism` and run SQL without rebuilding Go code.
 - Go tests live beside sources: for `path/to/pkg/<file>.go`, add tests in `path/to/pkg/<file>_test.go` (create if missing). For the same function, group related cases as `t.Run(...)` sub-tests (table-driven where helpful) and use **PascalCase** for subtest names (for example, `t.Run("Success", ...)`).

@@ -80,6 +80,7 @@ Thumbs.db
 .playwright-mcp
 .config
 .local
+/ci-reports/
 .project
 .vscode
 *.tmproj

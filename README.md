@@ -55,6 +55,18 @@ A GitHub Actions workflow (`.github/workflows/build-production.yml`) builds and 
 
 The workflow uses `GITHUB_TOKEN` for registry auth, publishes both `latest` and commit-specific `sha-...` tags, and can also be triggered manually with `workflow_dispatch`.
 
+### Checks Before Publishing
+
+Pushes to `production` and `feature/*`, and pull requests targeting `production`, run three ARM64 checks in the same dated development base used locally:
+
+- **Frontend:** Install locked dependencies and run the complete Vitest suite, with two workers to limit memory use.
+- **Backend:** Compile PhotoPrism and run `make test-ci-go`, covering `pkg/`, photo search, FFmpeg helpers, and thumbnails. Tests use an isolated SQLite database and a temporary `/photoprism` volume.
+- **Lint:** Block new Go lint findings relative to the previous push or pull request base, and ESLint errors in changed frontend source files. Full Go and frontend lint reports are uploaded as the `lint-reports` artifact, including existing findings outside the gate.
+
+The image publishing job requires all three checks to pass and only publishes from `production`. Feature branches and pull requests run checks without publishing images. CodeQL separately scans Go and JavaScript on `production` and its pull requests.
+
+The focused backend check is not the full backend suite. The initial full-suite run found stale expectations for fork settings and metadata, AI score differences, and tests requiring additional integration services. Those remain maintenance work; the publication gate does not claim they pass. The normal `make lint-go` and `make lint-js` commands now fail on lint errors, including existing ones.
+
 ## Branch Policy
 
 Use this workflow to keep upstream contribution work cheap while preserving a healthy deploy branch:

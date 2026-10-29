@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - production
+      - feature/**
+  pull_request:
+    branches:
+      - production
   workflow_dispatch:
 
 concurrency:
@@ -13,9 +17,126 @@ concurrency:
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/photoprism
 
+permissions:
+  contents: read
+
 jobs:
+  checks:
+    name: Checks (${{ matrix.check }})
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    container:
+      image: photoprism/develop:261027-resolute
+      options: --volume /photoprism
+    defaults:
+      run:
+        shell: bash
+    env:
+      GOMAXPROCS: 2
+      GOFLAGS: -p=2
+      GOCACHE: /tmp/go-cache
+      NPM_CONFIG_CACHE: /tmp/npm-cache
+      NPM_CONFIG_IGNORE_SCRIPTS: "true"
+      PHOTOPRISM_TEST_DRIVER: sqlite
+      PHOTOPRISM_CLI: noninteractive
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [frontend, backend, lint]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Cache Go Modules and Build Files
+        if: matrix.check != 'frontend'
+        uses: actions/cache@v5
+        with:
+          path: |
+            /go/pkg/mod
+            /tmp/go-cache
+          key: ${{ runner.os }}-${{ runner.arch }}-go-resolute261027-${{ matrix.check }}-${{ hashFiles('go.sum') }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-go-resolute261027-${{ matrix.check }}-
+
+      - name: Cache NPM Downloads
+        if: matrix.check != 'backend'
+        uses: actions/cache@v5
+        with:
+          path: /tmp/npm-cache
+          key: ${{ runner.os }}-${{ runner.arch }}-npm-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-npm-
+
+      - name: Install Locked Frontend Dependencies
+        if: matrix.check != 'backend'
+        run: make dep-js
+
+      - name: Frontend Unit Tests
+        if: matrix.check == 'frontend'
+        run: make test-js VITEST_ARGS=--maxWorkers=2
+
+      - name: Compile Backend and Run Core Tests
+        if: matrix.check == 'backend'
+        run: make build-go test-ci-go
+
+      - name: Resolve Lint Baseline
+        if: matrix.check == 'lint'
+        env:
+          EVENT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          base="$EVENT_BASE"
+          if [[ -z "$base" || "$base" == 0000000000000000000000000000000000000000 ]]; then
+            base="$(git merge-base HEAD origin/production)"
+            if [[ "$base" == "$(git rev-parse HEAD)" ]]; then
+              base="$(git rev-parse HEAD^)"
+            fi
+          fi
+          base="$(git rev-parse --verify "${base}^{commit}")"
+          echo "CI_LINT_BASE=$base" >> "$GITHUB_ENV"
+          mkdir -p ci-reports
+
+      - name: Report All Backend Lint Findings
+        if: matrix.check == 'lint'
+        continue-on-error: true
+        run: make lint-go GOLANGCI_LINT_ARGS="--timeout=5m --max-issues-per-linter=0 --max-same-issues=0 --output.json.path=ci-reports/backend-lint.json"
+
+      - name: Report All Frontend Lint Findings
+        if: matrix.check == 'lint'
+        continue-on-error: true
+        working-directory: frontend
+        run: npm run lint -- --format json --output-file ../ci-reports/frontend-lint.json
+
+      - name: Block New Backend Lint Findings
+        if: matrix.check == 'lint'
+        run: |
+          git diff --no-ext-diff --unified=0 "$CI_LINT_BASE" -- > ci-reports/changes.patch
+          make lint-go GOLANGCI_LINT_ARGS="--timeout=5m --new-from-patch=ci-reports/changes.patch"
+
+      - name: Lint Changed Frontend Sources
+        if: ${{ !cancelled() && matrix.check == 'lint' && env.CI_LINT_BASE != '' }}
+        working-directory: frontend
+        run: node scripts/lint-changed.mjs "$CI_LINT_BASE"
+
+      - name: Upload Full Lint Reports
+        if: ${{ always() && matrix.check == 'lint' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: lint-reports
+          path: ci-reports/
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Explain Lint Coverage
+        if: ${{ always() && matrix.check == 'lint' }}
+        run: |
+          echo 'Publishing requires no new Go lint findings and no ESLint errors in changed frontend source files.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Full lint reports include existing findings outside that gate. See the lint-reports artifact.' >> "$GITHUB_STEP_SUMMARY"
+
   build:
-    if: github.ref_name == 'production'
+    needs: checks
+    if: github.ref == 'refs/heads/production' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04-arm
 
     permissions:
@@ -24,7 +145,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
