@@ -62,7 +62,7 @@ build:
 audit:
 	npm audit --ignore-scripts --no-update-notifier
 lint:
-	npm run lint || true
+	npm run lint
 fmt:
 	npm run fmt
 test:

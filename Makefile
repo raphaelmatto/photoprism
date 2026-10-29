@@ -82,6 +82,7 @@ test-entity: run-test-entity
 test-commands: run-test-commands
 test-photoprism: run-test-photoprism
 test-short: run-test-short
+test-ci-go: run-test-ci-go
 test-mariadb: reset-acceptance run-test-mariadb
 acceptance-run-chromium: storage/acceptance acceptance-auth-sqlite-restart wait acceptance-auth acceptance-auth-sqlite-stop acceptance-sqlite-restart wait-2 acceptance acceptance-sqlite-stop
 acceptance-run-chromium-short: storage/acceptance acceptance-auth-sqlite-restart wait acceptance-auth-short acceptance-auth-sqlite-stop acceptance-sqlite-restart wait-2 acceptance-short acceptance-sqlite-stop
@@ -376,7 +377,7 @@ watch-js:
 	(cd frontend &&	env BUILD_ENV=development NODE_ENV=production npm run watch)
 test-js:
 	$(info Running JS unit tests...)
-	(cd frontend && npm run test)
+	(cd frontend && npm run test -- $(VITEST_ARGS))
 acceptance:
 	$(info Running public-mode tests in Chrome...)
 	(cd frontend &&	find ./tests/acceptance -type f -name "*.js" | xargs -i perl -0777 -ne 'while(/(?:mode: \"auth[^,]*\,)|(Multi-Window\:[A-Za-z 0-9\-_]*)/g){print "$$1\n" if ($$1);}' {} | xargs -I testname bash -c 'npm run testcafe -- "chrome --headless=new --use-gl=angle --use-angle=swiftshader --disable-features=LocalNetworkAccessChecks" --experimental-multiple-windows --test-meta mode=public --config-file ./testcaferc.json --test "testname" "tests/acceptance"')
@@ -423,6 +424,9 @@ reset-sqlite:
 run-test-short:
 	$(info Running short Go tests in parallel mode...)
 	$(GOTEST) -parallel 2 -count 1 -cpu 2 -short -timeout 5m ./pkg/... ./internal/... ./.../internal/...
+run-test-ci-go:
+	$(info Running core backend CI tests...)
+	$(GOTEST) -p 1 -parallel 2 -count 1 -cpu 2 -short -timeout 5m ./pkg/... ./internal/entity/search/... ./internal/ffmpeg/... ./internal/thumb/...
 run-test-go:
 	$(info Running all Go tests...)
 	$(GOTEST) -parallel 1 -count 1 -cpu 1 -tags="slow,develop" -timeout 20m ./pkg/... ./internal/... ./.../internal/...
@@ -957,7 +961,7 @@ lint-js:
 	$(MAKE) -C frontend lint
 lint-go:
 	$(info Linting Go code...)
-	golangci-lint run --issues-exit-code 0 ./pkg/... ./internal/... ./.../internal/...
+	golangci-lint run $(GOLANGCI_LINT_ARGS) ./pkg/... ./internal/... ./.../internal/...
 fmt-js:
 	(cd frontend &&	npm run fmt)
 fmt-go:

@@ -109,11 +109,11 @@ describe("PSidebarInfo component", () => {
   });
 
   it("copies the location when the location row is clicked", async () => {
-    const clickableItems = wrapper.findAll(".clickable");
+    const locationRow = wrapper.find('[data-tooltip="Coordinates"]');
 
-    expect(clickableItems.length).toBeGreaterThan(0);
+    expect(locationRow.exists()).toBe(true);
 
-    await clickableItems[0].trigger("click");
+    await locationRow.trigger("click");
 
     expect(copyLatLng).toHaveBeenCalled();
   });

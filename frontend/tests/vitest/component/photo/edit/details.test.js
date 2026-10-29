@@ -79,6 +79,7 @@ const makeWrapper = (overrides = {}) => {
         $lightbox: { openModels: vi.fn() },
         $vuetify: { display: { xs: false } },
         $config: {
+          getSettings: () => ({ display: { retinaThumbnails: false } }),
           feature: vi.fn().mockImplementation((f) => {
             if (f === "edit") return true;
             if (f === "review") return true;
@@ -352,6 +353,7 @@ describe("component/photo/edit/details", () => {
             $lightbox: { openModels: vi.fn() },
             $vuetify: { display: { xs: false } },
             $config: {
+              getSettings: () => ({ display: { retinaThumbnails: false } }),
               feature: vi.fn().mockImplementation((f) => (f === "edit" ? true : false)),
               get: vi.fn().mockImplementation((k) => (k === "clip" ? 255 : "")),
               values: { cameras: [], lenses: [] },
