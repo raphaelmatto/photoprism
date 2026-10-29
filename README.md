@@ -1,6 +1,6 @@
 # PhotoPrism Fork — raphaelmatto
 
-**Last Updated:** October 28, 2026
+**Last Updated:** October 29, 2026
 
 Personal fork of [PhotoPrism](https://github.com/photoprism/photoprism) with display quality enhancements for retina/HiDPI screens.
 
@@ -42,6 +42,10 @@ An earlier custom ARM64 Dockerfile worked around broken TensorFlow headers in th
 |--------|-----|
 | `origin` | `git@github.com:raphaelmatto/photoprism.git` (this fork) |
 | `upstream` | `https://github.com/photoprism/photoprism.git` (official repo) |
+
+## Upstream Review
+
+The [October 2026 upstream investigation](UPSTREAM_REVIEW.md) records missing features, trial-merge conflicts, individual patch checks, and integration estimates. The current decision is to retain this fork; none of the reviewed additions are planned for integration.
 
 ## CI/CD — Automated Docker Builds
 
