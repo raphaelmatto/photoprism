@@ -1,5 +1,7 @@
 # PhotoPrism Fork — raphaelmatto
 
+**Last Updated:** October 28, 2026
+
 Personal fork of [PhotoPrism](https://github.com/photoprism/photoprism) with display quality enhancements for retina/HiDPI screens.
 
 ## Features Added
@@ -20,7 +22,9 @@ New subcommand that lists every photo whose title, caption, taken-at, location, 
 
 ### ARM64 Docker Build
 
-Production images now build from the standard `docker/photoprism/questing/Dockerfile` on a native ARM64 GitHub Actions runner. An earlier custom ARM64 Dockerfile existed to work around broken TensorFlow headers in the deprecated `photoprism/develop:bookworm` base image, but that workaround was retired after switching to the supported `questing` base. See [upstream issue #5444](https://github.com/photoprism/photoprism/issues/5444).
+Production images build from `docker/photoprism/resolute/Dockerfile` on a native ARM64 GitHub Actions runner. Development and production use dated PhotoPrism base images for Ubuntu 26.04 LTS (Resolute Raccoon), replacing the unsupported Ubuntu 25.10 (Questing Quokka) base without updating the fork's application code.
+
+An earlier custom ARM64 Dockerfile worked around broken TensorFlow headers in the deprecated `photoprism/develop:bookworm` base image. See [upstream issue #5444](https://github.com/photoprism/photoprism/issues/5444).
 
 ## Branch Structure
 
@@ -46,7 +50,7 @@ A GitHub Actions workflow (`.github/workflows/build-production.yml`) builds and 
 - **Runner**: `ubuntu-24.04-arm` (native ARM64, no emulation)
 - **Registry**: `ghcr.io/raphaelmatto/photoprism:latest`
 - **Immutable tag**: `ghcr.io/raphaelmatto/photoprism:sha-<git-sha>`
-- **Dockerfile**: `docker/photoprism/questing/Dockerfile`
+- **Dockerfile**: `docker/photoprism/resolute/Dockerfile`
 - **Build time**: ~5 minutes
 
 The workflow uses `GITHUB_TOKEN` for registry auth, publishes both `latest` and commit-specific `sha-...` tags, and can also be triggered manually with `workflow_dispatch`.
@@ -93,28 +97,36 @@ UPSTREAM_PR_EXTRA_PATTERN='name-one|name-two|town-name' \
 
 If the script fails, either move the fork-only change back to `production` or replace the fixture/text with a generic placeholder before pushing the PR branch.
 
-## Dev workflow
+## Dev Workflow
 
-To start the containers:
+Run these commands from the repository root. On macOS, start Docker Desktop with `open -a Docker` if the Docker daemon is stopped.
+
+Start the containers and the PhotoPrism service without an interactive shell:
+
+```bash
 docker compose up -d photoprism mariadb traefik dummy-webdav dummy-oidc
+docker compose exec -T -u photoprism photoprism make start
+```
 
-To log into the photoprism container:
-docker exec -it photoprism-photoprism-1 /bin/bash
+The default development user is `photoprism` (UID 1000). If you override the container user, adjust the `-u` option accordingly. Open http://localhost:2342/ and sign in with `admin` / `photoprism`.
 
-After changes run:
-make build-js
+After backend changes, stop the service, rebuild, and start it again:
 
-... or try this for a hot-reload:
-make watch-js
+```bash
+docker compose exec -T -u photoprism photoprism make stop
+docker compose exec -T -u photoprism photoprism make build-go
+docker compose exec -T -u photoprism photoprism make start
+```
 
-To start photoprism, once logged in:
-./photoprism start
+After frontend changes, rebuild the browser assets and refresh the page:
 
-To view:
-http://localhost:2342/
+```bash
+docker compose exec -T -u photoprism photoprism make build-js
+```
 
-To view go changes, stop photoprism, run the following, then restart photoprism:
-go build -tags="debug,develop" -ldflags "-X main.version=dev" -o photoprism cmd/photoprism/photoprism.go
+For frontend watch mode, run `docker compose exec -u photoprism photoprism make watch-js`. To open an interactive shell, run `make terminal`.
+
+Photo folders belong under `storage/originals/`. Start a scan from **Library → Index** after adding or updating images.
 
 ## How to Deploy
 

@@ -1,5 +1,8 @@
-# Ubuntu 25.10 (Questing Quokka)
-FROM photoprism/develop:260130-questing
+# Ubuntu 26.04 LTS (Resolute Raccoon)
+FROM photoprism/develop:261027-resolute
+
+# Keep the fork's startup scripts in development mode.
+ENV DOCKER_ENV=develop
 
 # Harden npm usage by default (applies to npm ci / install in dev container)
 ENV NPM_CONFIG_IGNORE_SCRIPTS=true
