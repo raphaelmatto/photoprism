@@ -489,9 +489,10 @@
 
 .pswp__dynamic-caption .pswp__dynamic-caption-field {
     position: relative;
-    /* Fit the 18px icon so a date-only caption does not gain a scrollbar. */
-    min-height: 18px;
-    padding-inline-start: 22px;
+    /* Keep icons in flow so the row includes their actual font height. */
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    column-gap: 4px;
     white-space: normal;
     overflow-wrap: break-word;
     word-break: break-word;
@@ -504,9 +505,6 @@
 }
 
 .pswp__dynamic-caption .pswp__dynamic-caption-field > i.mdi {
-    position: absolute;
-    inset-inline-start: 0;
-    top: 0;
     width: 18px;
     font-size: 16px;
     line-height: inherit;
@@ -519,7 +517,7 @@
 
 .pswp__dynamic-caption .pswp__dynamic-caption-field--title,
 .pswp__dynamic-caption .pswp__dynamic-caption-field--caption {
-    padding-inline-start: 0;
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .pswp__dynamic-caption .pswp__dynamic-caption-field--caption {
@@ -545,7 +543,7 @@
 /* Whole-row click targets (date, camera, lens) keep block layout and the
    icon gutter so they line up with non-clickable rows. */
 button.pswp__dynamic-caption-field.pswp__dynamic-caption-field--clickable {
-    display: block;
+    display: grid;
     width: 100%;
     padding-block: 0;
     padding-inline-end: 0;

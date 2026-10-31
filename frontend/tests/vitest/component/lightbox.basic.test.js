@@ -328,6 +328,54 @@ describe("PLightbox (low-mock, jsdom-friendly)", () => {
     expect(html).toContain("Only caption");
   });
 
+  it("keeps a date-only caption icon and text in separate layout cells", () => {
+    const wrapper = mountLightbox({
+      global: {
+        mocks: {
+          $config: {
+            ...VTUConfig.global.mocks.$config,
+            getSettings: () => ({ features: {}, display: { metadata: { cards: ["date", "keywords", "caption"] } } }),
+          },
+        },
+      },
+    });
+    const caption = document.createElement("div");
+    caption.innerHTML = wrapper.vm.$options.methods.formatCaption.call(wrapper.vm.$.proxy, {
+      TakenAt: "2026-03-14T12:00:00Z",
+      TakenAtLocal: "2026-03-14T12:00:00Z",
+      DetailsKeywords: "",
+      Caption: "",
+    });
+
+    expect(caption.children).toHaveLength(1);
+    const date = caption.querySelector("button.pswp__dynamic-caption-field--date");
+    expect(date).not.toBeNull();
+    expect(date.children).toHaveLength(2);
+    expect(date.children[0].matches("i.mdi-calendar-range")).toBe(true);
+    expect(date.children[1].tagName).toBe("SPAN");
+    expect(date.children[1].textContent).toBe("Mar 14, 2026");
+    expect(date.getAttribute("data-query")).toBe("taken:2026-03-14");
+    expect(caption.querySelector(".pswp__dynamic-caption-field--keywords")).toBeNull();
+  });
+
+  it("keeps keyword search buttons together in the caption text cell", () => {
+    const wrapper = mountLightbox({
+      global: {
+        mocks: {
+          $config: {
+            ...VTUConfig.global.mocks.$config,
+            getSettings: () => ({ features: {}, display: { metadata: { cards: ["keywords"] } } }),
+          },
+        },
+      },
+    });
+    const caption = document.createElement("div");
+    caption.innerHTML = wrapper.vm.$options.methods.formatCaption.call(wrapper.vm.$.proxy, { DetailsKeywords: "Birds, Sunset" });
+    const text = caption.querySelector(".pswp__dynamic-caption-field--keywords > span");
+    expect(text.textContent).toBe("Birds, Sunset");
+    expect(text.querySelectorAll("button[data-action='search']")).toHaveLength(2);
+  });
+
   it("uses richer current-photo metadata for captions without replacing slide models", async () => {
     const wrapper = mountLightbox({
       global: {

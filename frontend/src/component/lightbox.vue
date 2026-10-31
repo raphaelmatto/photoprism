@@ -1639,15 +1639,15 @@ export default {
             }
             body += `<button type="button" class="pswp__dynamic-caption-field--clickable" data-action="search" data-query="${safeQuery}">${safeKw}</button>`;
           });
-          caption += `<div class="${fieldClass}">${iconHtml}${body}</div>`;
+          caption += `<div class="${fieldClass}">${iconHtml}<span>${body}</span></div>`;
           continue;
         }
 
         if (field.search) {
           const safeQuery = this.$util.encodeHTML(field.search);
-          caption += `<button type="button" class="${fieldClass} pswp__dynamic-caption-field--clickable" data-action="search" data-query="${safeQuery}">${iconHtml}${safeText}</button>`;
+          caption += `<button type="button" class="${fieldClass} pswp__dynamic-caption-field--clickable" data-action="search" data-query="${safeQuery}">${iconHtml}<span>${safeText}</span></button>`;
         } else {
-          caption += `<div class="${fieldClass}">${iconHtml}${safeText}</div>`;
+          caption += `<div class="${fieldClass}">${iconHtml}<span>${safeText}</span></div>`;
         }
       }
       return caption;
