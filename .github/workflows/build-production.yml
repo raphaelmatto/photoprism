@@ -75,17 +75,18 @@ jobs:
 
       - name: Frontend Unit Tests
         if: matrix.check == 'frontend'
-        run: make test-js VITEST_ARGS=--maxWorkers=2
+        run: bash scripts/ci-run.sh make test-js VITEST_ARGS=--maxWorkers=2
 
       - name: Compile Backend and Run Core Tests
         if: matrix.check == 'backend'
-        run: make build-go test-ci-go
+        run: bash scripts/ci-run.sh make build-go test-ci-go
 
       - name: Resolve Lint Baseline
         if: matrix.check == 'lint'
         env:
           EVENT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
+          bash scripts/ci-run.sh bash -euo pipefail <<'BASELINE'
           base="$EVENT_BASE"
           if [[ -z "$base" || "$base" == 0000000000000000000000000000000000000000 ]]; then
             base="$(git merge-base HEAD origin/production)"
@@ -96,6 +97,7 @@ jobs:
           base="$(git rev-parse --verify "${base}^{commit}")"
           echo "CI_LINT_BASE=$base" >> "$GITHUB_ENV"
           mkdir -p ci-reports
+          BASELINE
 
       - name: Report All Backend Lint Findings
         if: matrix.check == 'lint'
