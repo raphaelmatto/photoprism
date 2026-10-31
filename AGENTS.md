@@ -1,6 +1,6 @@
 # PhotoPrism® — Repository Guidelines
 
-**Last Updated:** October 28, 2026
+**Last Updated:** October 30, 2026
 
 ## Purpose
 
@@ -128,6 +128,7 @@ console.log(inContainer ? "container" : "host");
 
 ### Fork Branch Policy
 
+- Before pushing feature or fix commits to `production` or deploying them to EC2, make the change available locally and wait for the user's verification and explicit go-ahead. Record local checks and give the user the local URL for review.
 - Treat `production` as the fork's integration and deploy branch. It MUST contain all changes that are running in production and all code from feature branches with open upstream PRs.
 - Start each new feature on a short-lived branch created from `production`, for example `feature/<name>`.
 - Keep commits intentionally scoped while developing:
