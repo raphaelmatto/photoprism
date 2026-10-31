@@ -489,6 +489,8 @@
 
 .pswp__dynamic-caption .pswp__dynamic-caption-field {
     position: relative;
+    /* Fit the 18px icon so a date-only caption does not gain a scrollbar. */
+    min-height: 18px;
     padding-inline-start: 22px;
     white-space: normal;
     overflow-wrap: break-word;
