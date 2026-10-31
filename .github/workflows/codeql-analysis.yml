@@ -40,6 +40,9 @@ jobs:
       with:
         persist-credentials: false
 
+    - name: Match Workspace Ownership to Container User
+      run: chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE"
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       with:

@@ -51,6 +51,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Match Workspace Ownership to Container User
+        run: chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE"
+
       - name: Cache Go Modules and Build Files
         if: matrix.check != 'frontend'
         uses: actions/cache@v5
