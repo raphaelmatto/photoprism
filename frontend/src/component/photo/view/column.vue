@@ -65,7 +65,8 @@
                 <div v-if="item.keywordsInteractive" :title="item.label" :class="item.className">
                   <i v-if="item.icon" class="mdi" :class="item.icon" />
                   <template v-for="(kw, kwIndex) in item.keywords" :key="`${photo.ID}-${item.key}-${kwIndex}`">
-                    <button type="button" class="meta-keyword-link clickable" @click.stop.prevent="openKeyword(kw)">{{ kw }}</button><span v-if="kwIndex < item.keywords.length - 1">, </span>
+                    <button type="button" class="meta-keyword-link clickable" @click.stop.prevent="openKeyword(kw)">{{ kw }}</button
+                    ><span v-if="kwIndex < item.keywords.length - 1">, </span>
                   </template>
                 </div>
                 <component
@@ -90,6 +91,7 @@
 <script>
 import { hasMetadataText, keywordsList, metadataIcon, metadataLabel, metadataLayout, metadataText, MetadataView } from "common/metadata";
 import { Input, InputInvalid, ClickShort, ClickLong } from "common/input";
+import { PixelAlign } from "common/pixel-align";
 import Thumb from "model/thumb";
 import * as contexts from "options/contexts";
 
@@ -143,9 +145,14 @@ export default {
       input,
       featPlaces,
       contexts,
+      pixelRatio: window.devicePixelRatio || 1,
     };
   },
   computed: {
+    // Use the current display density only when Retina image sizing is enabled.
+    imagePixelRatio() {
+      return this.$config.getSettings()?.display?.retinaLightbox ? this.pixelRatio : 1;
+    },
     columnLayout() {
       return metadataLayout(this.$config.getSettings(), MetadataView.Cards);
     },
@@ -155,17 +162,37 @@ export default {
       return { "--p-lightbox-border-width": `${borderWidth}px` };
     },
   },
+  // Keep image and metadata frames aligned as their sizes change.
+  mounted() {
+    this.pixelAlign = new PixelAlign(this.$el, ".column-photo");
+    window.addEventListener("resize", this.onResize);
+  },
+  // Include appended results and updated captions in the alignment pass.
+  updated() {
+    this.pixelAlign?.update();
+  },
+  // Remove layout observers and listeners when switching views.
+  beforeUnmount() {
+    this.pixelAlign?.destroy();
+    window.removeEventListener("resize", this.onResize);
+  },
   methods: {
+    // Recalculate Retina dimensions when zoom or the display's density changes.
+    onResize() {
+      this.pixelRatio = window.devicePixelRatio || 1;
+    },
+    // Preserve source aspect ratio and exact Retina sizes, including half CSS pixels.
     thumbInfo(photo) {
       const display = this.$config.getSettings()?.display;
-      const dpr = display?.retinaLightbox ? window.devicePixelRatio || 1 : 1;
+      const dpr = this.imagePixelRatio;
       const thumbs = Thumb.fromPhoto(photo).Thumbs;
       const original = display?.originals ? thumbs?.original : null;
       const source = original || this.$util.thumb(thumbs, Math.round(window.innerWidth * dpr), Math.round(window.innerHeight * dpr));
       return {
         src: source.src,
-        width: Math.round(source.w / dpr),
-        height: Math.round(source.h / dpr),
+        width: source.w,
+        height: source.h,
+        style: { transform: `scale(${1 / dpr})` },
         alt: photo.Title,
       };
     },
@@ -177,7 +204,7 @@ export default {
       if (!info?.width) {
         return null;
       }
-      return { maxWidth: `${info.width}px` };
+      return { "maxWidth": `${info.width / this.imagePixelRatio}px`, "--p-image-aspect": `${(100 * info.height) / info.width}%` };
     },
     columnMetadataItems(photo) {
       return this.columnLayout

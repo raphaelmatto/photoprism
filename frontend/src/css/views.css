@@ -1094,6 +1094,7 @@ body.mobile .face-results.cards-view {
 }
 
 .column-view .column-photo {
+    position: relative;
     display: block;
     margin: 0 auto;
 }
@@ -1107,10 +1108,21 @@ body.mobile .face-results.cards-view {
     box-shadow: 0 0 0 var(--p-lightbox-border-width) var(--p-lightbox-frame);
 }
 
+.column-view .column-image::before {
+    content: "";
+    display: block;
+    padding-top: var(--p-image-aspect);
+}
+
 .column-view .column-image__img {
-    max-width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: none;
     height: auto;
     display: block;
+    /* Paint integer source dimensions before scaling to avoid CSS-pixel rounding. */
+    transform-origin: top left;
 }
 
 .column-view .column-image__overlay {
